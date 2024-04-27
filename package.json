@@ -1,12 +1,18 @@
 {
-	"name": "com.depra.template",
+	"name": "com.depra.sound.unity.fmod",
 	"version": "0.0.1",
-	"displayName": "Unity Package Template",
-	"description": "Template for creating Unity game engine packages.",
-	"unity": "2022.3",
+	"displayName": "Depra.Sound.FMOD",
+	"description": "",
+	"unity": "2021.3",
 	"license": "Apache-2.0",
-  "dependencies": {},
-	"keywords": [],
+	"dependencies": {
+		"com.depra.sound.unity": "0.0.1"
+	},
+	"keywords": [
+		"fmod",
+		"sound",
+		"unity"
+	],
 	"author": {
 		"name": "Depra, Inc.",
 		"email": "n.melnikov@depra.org",
@@ -14,6 +20,6 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Depra-Inc/Template.Package.Unity.git"
+		"url": "https://github.com/Depra-Inc/Sound.Unity.FMOD.git"
 	}
 }

@@ -1,0 +1,19 @@
+{
+    "name": "Depra.Sound.FMOD",
+    "rootNamespace": "Depra.Sound.FMOD",
+    "references": [
+        "GUID:5c3cbf54bce652248b5d0c693909f476",
+        "GUID:0c752da273b17c547ae705acf0f2adf2"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Depra.Sound.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
