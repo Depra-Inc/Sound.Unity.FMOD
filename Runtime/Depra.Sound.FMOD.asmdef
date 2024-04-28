@@ -2,6 +2,7 @@
     "name": "Depra.Sound.FMOD",
     "rootNamespace": "Depra.Sound.FMOD",
     "references": [
+        "GUID:816d74bcd7577b44e97c46316f0387a9",
         "GUID:5c3cbf54bce652248b5d0c693909f476",
         "GUID:0c752da273b17c547ae705acf0f2adf2"
     ],

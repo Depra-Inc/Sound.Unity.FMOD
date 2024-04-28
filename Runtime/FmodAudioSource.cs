@@ -9,6 +9,7 @@ using FMOD.Studio;
 using FMODUnity;
 using UnityEngine;
 using static Depra.Sound.Module;
+using Debug = UnityEngine.Debug;
 using STOP_MODE = FMOD.Studio.STOP_MODE;
 
 namespace Depra.Sound.FMOD
@@ -41,7 +42,14 @@ namespace Depra.Sound.FMOD
 		{
 			var fmodClip = clip as FmodAudioClip;
 			_lastInstance = RuntimeManager.CreateInstance(fmodClip);
-			_lastInstance.start();
+			var result = _lastInstance.start();
+			if (result == RESULT.OK)
+			{
+				return;
+			}
+
+			Debug.LogError($"Failed to start audio: {result}");
+			Stopped?.Invoke(AudioStopReason.ERROR);
 		}
 
 		void IAudioSource.Stop()

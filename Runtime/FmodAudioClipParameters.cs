@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using Depra.Sound.Parameter;
 using FMOD;
+using FMODUnity;
+using UnityEngine;
 
 namespace Depra.Sound.FMOD
 {
@@ -17,7 +19,8 @@ namespace Depra.Sound.FMOD
 		IEnumerable<Type> IAudioClipParameters.SupportedTypes() => new[]
 		{
 			typeof(VolumeParameter),
-			typeof(PitchParameter)
+			typeof(PitchParameter),
+			typeof(PositionParameter)
 		};
 
 		IAudioClipParameter IAudioClipParameters.Get(Type type)
@@ -34,6 +37,8 @@ namespace Depra.Sound.FMOD
 					new VolumeParameter(volume),
 				_ when type == typeof(PitchParameter) && instance.getPitch(out var pitch) == RESULT.OK =>
 					new PitchParameter(pitch),
+				_ when type == typeof(PositionParameter) && instance.get3DAttributes(out var attr) == RESULT.OK =>
+					new PositionParameter(new Vector3(attr.position.x, attr.position.y, attr.position.z)),
 				_ => new NullParameter()
 			};
 		}
@@ -52,6 +57,9 @@ namespace Depra.Sound.FMOD
 					break;
 				case PitchParameter pitch:
 					_source.LastInstance.setPitch(pitch.Value);
+					break;
+				case PositionParameter position:
+					_source.LastInstance.set3DAttributes(position.Value.To3DAttributes());
 					break;
 			}
 		}

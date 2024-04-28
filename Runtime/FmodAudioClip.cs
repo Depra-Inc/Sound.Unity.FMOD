@@ -25,6 +25,7 @@ namespace Depra.Sound.FMOD
 		{
 			var description = RuntimeManager.GetEventDescription(_event);
 			description.getLength(out var length);
+
 			return length;
 		}
 	}
