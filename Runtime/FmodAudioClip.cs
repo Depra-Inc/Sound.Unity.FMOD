@@ -15,7 +15,7 @@ namespace Depra.Sound.FMOD
 
 		public static implicit operator EventReference(FmodAudioClip clip) => clip._event;
 
-		string IAudioClip.Name => _event.Path;
+		string IAudioClip.Name => _event.ToString();
 
 		float IAudioClip.Duration => GetLength();
 
