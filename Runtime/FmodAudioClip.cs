@@ -1,14 +1,14 @@
 ﻿// SPDX-License-Identifier: Apache-2.0
 // © 2024 Nikolay Melnikov <n.melnikov@depra.org>
 
-using Depra.Inspector.SerializedReference;
+using Depra.SerializeReference.Extensions;
 using Depra.Sound.Clip;
 using FMODUnity;
 using UnityEngine;
 
 namespace Depra.Sound.FMOD
 {
-	[SubtypeAlias(nameof(FmodAudioClip))]
+	[SerializeReferenceMenuPath(nameof(FmodAudioClip))]
 	public sealed class FmodAudioClip : IAudioClip
 	{
 		[SerializeField] private EventReference _event;
