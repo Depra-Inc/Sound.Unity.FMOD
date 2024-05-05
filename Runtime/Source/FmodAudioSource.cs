@@ -18,7 +18,9 @@ namespace Depra.Sound.FMOD
 	public sealed class FmodAudioSource : MonoBehaviour, IAudioSource
 	{
 		[SerializeField] private STOP_MODE _stopMode;
+
 		private EventInstance _lastInstance;
+		private FmodAudioClipParameters _parameters;
 
 		public event IAudioSource.PlayDelegate Started;
 		public event IAudioSource.StopDelegate Stopped;
@@ -36,7 +38,7 @@ namespace Depra.Sound.FMOD
 		                         state == PLAYBACK_STATE.PLAYING;
 
 		internal EventInstance LastInstance => _lastInstance;
-		IAudioClipParameters IAudioSource.Parameters => new FmodAudioClipParameters(this);
+		IAudioClipParameters IAudioSource.Parameters => _parameters ??= new FmodAudioClipParameters(this);
 
 		void IAudioSource.Play(IAudioClip clip)
 		{
@@ -45,6 +47,7 @@ namespace Depra.Sound.FMOD
 			var result = _lastInstance.start();
 			if (result == RESULT.OK)
 			{
+				Started?.Invoke();
 				return;
 			}
 
@@ -54,10 +57,13 @@ namespace Depra.Sound.FMOD
 
 		void IAudioSource.Stop()
 		{
-			if (IsPlaying)
+			if (IsPlaying == false)
 			{
-				_lastInstance.stop(_stopMode);
+				return;
 			}
+
+			_lastInstance.stop(_stopMode);
+			Stopped?.Invoke(AudioStopReason.STOPPED);
 		}
 	}
 }

@@ -18,8 +18,10 @@ namespace Depra.Sound.FMOD
 
 		IEnumerable<Type> IAudioClipParameters.SupportedTypes() => new[]
 		{
-			typeof(VolumeParameter),
+			typeof(FmodFloat),
+			typeof(FmodInteger),
 			typeof(PitchParameter),
+			typeof(VolumeParameter),
 			typeof(PositionParameter)
 		};
 
@@ -60,6 +62,12 @@ namespace Depra.Sound.FMOD
 					break;
 				case PositionParameter position:
 					_source.LastInstance.set3DAttributes(position.Value.To3DAttributes());
+					break;
+				case FmodFloat @float:
+					_source.LastInstance.setParameterByName(@float.Name, @float.Value, @float.IgnoreSeekSpeed);
+					break;
+				case FmodInteger integer:
+					_source.LastInstance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed);
 					break;
 			}
 		}
