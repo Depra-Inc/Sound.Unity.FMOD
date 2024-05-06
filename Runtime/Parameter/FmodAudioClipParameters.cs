@@ -43,6 +43,7 @@ namespace Depra.Sound.FMOD
 		IEnumerable<Type> IAudioClipParameters.SupportedTypes() => new[]
 		{
 			typeof(FmodFloat),
+			typeof(FmodLabel),
 			typeof(FmodInteger),
 			typeof(PitchParameter),
 			typeof(VolumeParameter),
