@@ -34,6 +34,7 @@ namespace Depra.Sound.FMOD
 			EmptyParameter => RESULT.OK,
 			VolumeParameter volume => instance.setVolume(volume.Value),
 			PitchParameter pitch => instance.setPitch(pitch.Value),
+			LabelParameter label => instance.setParameterByNameWithLabel(label.Name, label.Value),
 			PositionParameter position => instance.set3DAttributes(position.Value.To3DAttributes()),
 			FmodFloat @float => instance.setParameterByName(@float.Name, @float.Value, @float.IgnoreSeekSpeed),
 			FmodInteger integer => instance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed),
@@ -47,6 +48,7 @@ namespace Depra.Sound.FMOD
 			typeof(FmodLabel),
 			typeof(FmodInteger),
 			typeof(EmptyParameter),
+			typeof(LabelParameter),
 			typeof(PitchParameter),
 			typeof(VolumeParameter),
 			typeof(PositionParameter)
@@ -69,7 +71,7 @@ namespace Depra.Sound.FMOD
 			var result = SetInternal(instance, parameter);
 			if (result != RESULT.OK)
 			{
-				Debug.LogError($"Failed to set parameter: {result}");
+				Debug.LogError($"Failed to set parameter {parameter.GetType().Name}: {result}");
 			}
 		}
 	}

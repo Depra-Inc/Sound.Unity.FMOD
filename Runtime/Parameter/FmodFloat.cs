@@ -3,15 +3,16 @@
 
 using System;
 using Depra.Sound.Parameter;
+using UnityEngine;
 
 namespace Depra.Sound.FMOD
 {
 	[Serializable]
 	public struct FmodFloat : IAudioClipParameter
 	{
-		public string Name;
-		public float Value;
-		public bool IgnoreSeekSpeed;
+		[field: SerializeField] public string Name { get; private set; }
+		[field: SerializeField] public float Value { get; private set; }
+		[field: SerializeField] public bool IgnoreSeekSpeed { get; private set; }
 
 		public FmodFloat(string name, float value, bool ignoreSeekSpeed = false)
 		{
