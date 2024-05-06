@@ -31,6 +31,7 @@ namespace Depra.Sound.FMOD
 
 		private RESULT SetInternal(EventInstance instance, IAudioClipParameter parameter) => parameter switch
 		{
+			EmptyParameter => RESULT.OK,
 			VolumeParameter volume => instance.setVolume(volume.Value),
 			PitchParameter pitch => instance.setPitch(pitch.Value),
 			PositionParameter position => instance.set3DAttributes(position.Value.To3DAttributes()),
@@ -45,6 +46,7 @@ namespace Depra.Sound.FMOD
 			typeof(FmodFloat),
 			typeof(FmodLabel),
 			typeof(FmodInteger),
+			typeof(EmptyParameter),
 			typeof(PitchParameter),
 			typeof(VolumeParameter),
 			typeof(PositionParameter)

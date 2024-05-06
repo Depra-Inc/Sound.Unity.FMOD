@@ -1,12 +1,12 @@
 {
 	"name": "com.depra.sound.unity.fmod",
-	"version": "0.0.10",
+	"version": "0.0.11",
 	"displayName": "Depra.Sound.FMOD",
 	"description": "",
 	"unity": "2021.3",
 	"license": "Apache-2.0",
 	"dependencies": {
-		"com.depra.sound.unity": "0.0.15"
+		"com.depra.sound.unity": "0.0.17"
 	},
 	"keywords": [
 		"fmod",
