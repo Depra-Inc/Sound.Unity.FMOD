@@ -32,25 +32,29 @@ namespace Depra.Sound.FMOD
 		private RESULT SetInternal(EventInstance instance, IAudioClipParameter parameter) => parameter switch
 		{
 			EmptyParameter => RESULT.OK,
-			VolumeParameter volume => instance.setVolume(volume.Value),
 			PitchParameter pitch => instance.setPitch(pitch.Value),
+			VolumeParameter volume => instance.setVolume(volume.Value),
+			SingleParameter single => instance.setParameterByName(single.Name, single.Value),
+			IntegerParameter integer => instance.setParameterByName(integer.Name, integer.Value),
 			LabelParameter label => instance.setParameterByNameWithLabel(label.Name, label.Value),
 			PositionParameter position => instance.set3DAttributes(position.Value.To3DAttributes()),
-			FmodFloat @float => instance.setParameterByName(@float.Name, @float.Value, @float.IgnoreSeekSpeed),
-			FmodInteger integer => instance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed),
+			FmodSingle single => instance.setParameterByName(single.Name, single.Value, single.IgnoreSeekSpeed),
 			FmodLabel label => instance.setParameterByNameWithLabel(label.Name, label.Value, label.IgnoreSeekSpeed),
+			FmodInteger integer => instance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed),
 			_ => RESULT.ERR_INVALID_PARAM
 		};
 
 		IEnumerable<Type> IAudioClipParameters.SupportedTypes() => new[]
 		{
-			typeof(FmodFloat),
 			typeof(FmodLabel),
+			typeof(FmodSingle),
 			typeof(FmodInteger),
 			typeof(EmptyParameter),
 			typeof(LabelParameter),
 			typeof(PitchParameter),
 			typeof(VolumeParameter),
+			typeof(SingleParameter),
+			typeof(IntegerParameter),
 			typeof(PositionParameter)
 		};
 
