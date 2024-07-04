@@ -38,6 +38,7 @@ namespace Depra.Sound.FMOD
 			IntegerParameter integer => instance.setParameterByName(integer.Name, integer.Value),
 			LabelParameter label => instance.setParameterByNameWithLabel(label.Name, label.Value),
 			PositionParameter position => instance.set3DAttributes(position.Value.To3DAttributes()),
+			RuntimePositionParameter => instance.set3DAttributes(_source.transform.To3DAttributes()),
 			FmodSingle single => instance.setParameterByName(single.Name, single.Value, single.IgnoreSeekSpeed),
 			FmodLabel label => instance.setParameterByNameWithLabel(label.Name, label.Value, label.IgnoreSeekSpeed),
 			FmodInteger integer => instance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed),
@@ -55,7 +56,8 @@ namespace Depra.Sound.FMOD
 			typeof(VolumeParameter),
 			typeof(SingleParameter),
 			typeof(IntegerParameter),
-			typeof(PositionParameter)
+			typeof(PositionParameter),
+			typeof(RuntimePositionParameter)
 		};
 
 		IAudioClipParameter IAudioClipParameters.Get(Type type)
