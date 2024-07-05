@@ -15,7 +15,7 @@ using STOP_MODE = FMOD.Studio.STOP_MODE;
 namespace Depra.Sound.FMOD
 {
 	[AddComponentMenu(MENU_PATH + nameof(FmodAudioSource), DEFAULT_ORDER)]
-	public sealed class FmodAudioSource : MonoBehaviour, IAudioSource
+	public sealed class FmodAudioSource : SceneAudioSource, IAudioSource
 	{
 		[SerializeField] private STOP_MODE _stopMode;
 
