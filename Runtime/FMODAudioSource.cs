@@ -132,9 +132,6 @@ namespace Depra.Sound.FMOD
 			}
 		}
 
-		public TParameter Read<TParameter>() where TParameter : IAudioSourceParameter =>
-			(TParameter) Read(typeof(TParameter));
-
 		public IAudioSourceParameter Read(Type type)
 		{
 			return _lastInstance.isValid() ? ReadInternal() : new NullParameter();
@@ -149,6 +146,12 @@ namespace Depra.Sound.FMOD
 					new PositionParameter(new Vector3(attr.position.x, attr.position.y, attr.position.z)),
 				_ => new NullParameter()
 			};
+		}
+
+		void IAudioSource.Play(IAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
+		{
+			Guard.AgainstUnsupportedType(clip.GetType(), SUPPORTED_TRACK);
+			Play((FMODAudioClip) clip, parameters);
 		}
 
 		IEnumerable<IAudioSourceParameter> IAudioSource.EnumerateParameters() => SupportedTypes().Select(Read);
