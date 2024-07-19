@@ -17,7 +17,7 @@ namespace Depra.Sound.FMOD
 
 		[SerializeReferenceDropdown]
 		[UnityEngine.SerializeReference]
-		private IAudioClipParameter[] _parameters;
+		private IAudioSourceParameter[] _parameters;
 
 		public FMODAudioTrack() { }
 		public FMODAudioTrack(EventReference @event) => _event = @event;
@@ -31,5 +31,11 @@ namespace Depra.Sound.FMOD
 		}
 
 		IAudioClip IAudioTrack.Play(IAudioSource source) => Play((FMODAudioSource) source);
+
+		void IAudioTrack.Deconstruct(out IAudioClip clip, out IAudioSourceParameter[] parameters)
+		{
+			clip = new FMODAudioClip(_event);
+			parameters = _parameters;
+		}
 	}
 }

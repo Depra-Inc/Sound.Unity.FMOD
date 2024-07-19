@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Depra.Sound.FMOD
 {
 	[Serializable]
-	public sealed class FMODInteger : IAudioClipParameter
+	public sealed class FMODInteger : IAudioSourceParameter
 	{
 		[field: SerializeField] public string Name { get; private set; }
 		[field: SerializeField] public int Value { get; private set; }
@@ -25,7 +25,7 @@ namespace Depra.Sound.FMOD
 
 	[Serializable]
 	[SerializeReferenceIcon("d_FilterByLabel")]
-	public sealed class FMODLabel : IAudioClipParameter
+	public sealed class FMODLabel : IAudioSourceParameter
 	{
 		[field: SerializeField] public string Name { get; private set; }
 		[field: SerializeField] public string Value { get; private set; }
@@ -41,7 +41,7 @@ namespace Depra.Sound.FMOD
 	}
 
 	[Serializable]
-	public sealed class FMODSingle : IAudioClipParameter
+	public sealed class FMODSingle : IAudioSourceParameter
 	{
 		[field: SerializeField] public string Name { get; private set; }
 		[field: SerializeField] public float Value { get; private set; }

@@ -81,7 +81,7 @@ namespace Depra.Sound.FMOD
 		}
 
 
-		public void Play(FMODAudioClip clip, IEnumerable<IAudioClipParameter> parameters)
+		public void Play(FMODAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
 		{
 			_lastInstance = RuntimeManager.CreateInstance(clip);
 			if (_lastInstance.isValid() == false)
@@ -91,7 +91,7 @@ namespace Depra.Sound.FMOD
 
 			foreach (var parameter in parameters)
 			{
-				Set(parameter);
+				Write(parameter);
 			}
 
 			var result = _lastInstance.start();
@@ -106,7 +106,7 @@ namespace Depra.Sound.FMOD
 			}
 		}
 
-		public void Set(IAudioClipParameter parameter)
+		public void Write(IAudioSourceParameter parameter)
 		{
 			var result = parameter switch
 			{
@@ -132,14 +132,14 @@ namespace Depra.Sound.FMOD
 			}
 		}
 
-		public TParameter Read<TParameter>() where TParameter : IAudioClipParameter =>
+		public TParameter Read<TParameter>() where TParameter : IAudioSourceParameter =>
 			(TParameter) Read(typeof(TParameter));
 
-		public IAudioClipParameter Read(Type type)
+		public IAudioSourceParameter Read(Type type)
 		{
 			return _lastInstance.isValid() ? ReadInternal() : new NullParameter();
 
-			IAudioClipParameter ReadInternal() => type switch
+			IAudioSourceParameter ReadInternal() => type switch
 			{
 				_ when type == typeof(VolumeParameter) && _lastInstance.getVolume(out var volume) == RESULT.OK =>
 					new VolumeParameter(volume),
@@ -151,6 +151,6 @@ namespace Depra.Sound.FMOD
 			};
 		}
 
-		IEnumerable<IAudioClipParameter> IAudioSource.EnumerateParameters() => SupportedTypes().Select(Read);
+		IEnumerable<IAudioSourceParameter> IAudioSource.EnumerateParameters() => SupportedTypes().Select(Read);
 	}
 }
