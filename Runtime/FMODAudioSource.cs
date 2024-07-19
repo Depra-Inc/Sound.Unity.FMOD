@@ -22,23 +22,9 @@ namespace Depra.Sound.FMOD
 	{
 		[SerializeField] private STOP_MODE _stopMode;
 
+		private static readonly Type SUPPORTED_CLIP = typeof(FMODAudioClip);
 		private static readonly Type SUPPORTED_TRACK = typeof(FMODAudioTrack);
 		private static readonly Type[] SUPPORTED_TRACKS = { SUPPORTED_TRACK };
-
-		private static IEnumerable<Type> SupportedTypes() => new[]
-		{
-			typeof(FMODLabel),
-			typeof(FMODSingle),
-			typeof(FMODInteger),
-			typeof(EmptyParameter),
-			typeof(LabelParameter),
-			typeof(PitchParameter),
-			typeof(VolumeParameter),
-			typeof(SingleParameter),
-			typeof(IntegerParameter),
-			typeof(PositionParameter),
-			typeof(RuntimePositionParameter)
-		};
 
 		private EventInstance _lastInstance;
 
@@ -63,23 +49,20 @@ namespace Depra.Sound.FMOD
 
 		public void Play(IAudioTrack track)
 		{
+			Guard.AgainstUnsupportedType(track.GetType(), SUPPORTED_TRACK);
 			var clip = track.Play(this);
-			Guard.AgainstUnsupportedType(clip.GetType(), SUPPORTED_TRACK);
+			Guard.AgainstUnsupportedType(clip.GetType(), SUPPORTED_CLIP);
 
 			Current = (FMODAudioClip) clip;
 		}
 
 		public void Stop()
 		{
-			if (IsPlaying == false)
+			if (IsPlaying)
 			{
-				return;
+				OnStop(AudioStopReason.STOPPED);
 			}
-
-			_lastInstance.stop(_stopMode);
-			Stopped?.Invoke(AudioStopReason.STOPPED);
 		}
-
 
 		public void Play(FMODAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
 		{
@@ -102,7 +85,7 @@ namespace Depra.Sound.FMOD
 			else
 			{
 				Debug.LogErrorFormat(LOG_FORMAT, $"Failed to start audio: {result}");
-				Stopped?.Invoke(AudioStopReason.ERROR);
+				OnStop(AudioStopReason.ERROR);
 			}
 		}
 
@@ -119,10 +102,8 @@ namespace Depra.Sound.FMOD
 				PositionParameter position => _lastInstance.set3DAttributes(position.Value.To3DAttributes()),
 				RuntimePositionParameter => _lastInstance.set3DAttributes(transform.To3DAttributes()),
 				FMODSingle single => _lastInstance.setParameterByName(single.Name, single.Value, single.IgnoreSeekSpeed),
-				FMODLabel label => _lastInstance.setParameterByNameWithLabel(label.Name, label.Value,
-					label.IgnoreSeekSpeed),
-				FMODInteger integer => _lastInstance.setParameterByName(integer.Name, integer.Value,
-					integer.IgnoreSeekSpeed),
+				FMODLabel label => _lastInstance.setParameterByNameWithLabel(label.Name, label.Value, label.IgnoreSeekSpeed),
+				FMODInteger integer => _lastInstance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed),
 				_ => RESULT.ERR_INVALID_PARAM
 			};
 			if (result != RESULT.OK)
@@ -148,12 +129,36 @@ namespace Depra.Sound.FMOD
 			};
 		}
 
+		private void OnStop(AudioStopReason reason)
+		{
+			_lastInstance.stop(_stopMode);
+			_lastInstance.release();
+			_lastInstance = default;
+
+			Stopped?.Invoke(reason);
+		}
+
+		private IEnumerable<Type> SupportedParameterTypes() => new[]
+		{
+			typeof(FMODLabel),
+			typeof(FMODSingle),
+			typeof(FMODInteger),
+			typeof(EmptyParameter),
+			typeof(LabelParameter),
+			typeof(PitchParameter),
+			typeof(VolumeParameter),
+			typeof(SingleParameter),
+			typeof(IntegerParameter),
+			typeof(PositionParameter),
+			typeof(RuntimePositionParameter)
+		};
+
 		void IAudioSource.Play(IAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
 		{
-			Guard.AgainstUnsupportedType(clip.GetType(), SUPPORTED_TRACK);
+			Guard.AgainstUnsupportedType(clip.GetType(), SUPPORTED_CLIP);
 			Play((FMODAudioClip) clip, parameters);
 		}
 
-		IEnumerable<IAudioSourceParameter> IAudioSource.EnumerateParameters() => SupportedTypes().Select(Read);
+		IEnumerable<IAudioSourceParameter> IAudioSource.EnumerateParameters() => SupportedParameterTypes().Select(Read);
 	}
 }
