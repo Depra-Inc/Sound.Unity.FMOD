@@ -23,8 +23,7 @@ namespace Depra.Sound.FMOD
 		[SerializeField] private STOP_MODE _stopMode;
 
 		private static readonly Type SUPPORTED_CLIP = typeof(FMODAudioClip);
-		private static readonly Type SUPPORTED_TRACK = typeof(FMODAudioTrack);
-		private static readonly Type[] SUPPORTED_TRACKS = { SUPPORTED_TRACK };
+		private static readonly Type[] SUPPORTED_CLIPS = { SUPPORTED_CLIP };
 
 		private EventInstance _lastInstance;
 
@@ -45,16 +44,7 @@ namespace Depra.Sound.FMOD
 
 		public FMODAudioClip Current { get; private set; }
 		IAudioClip IAudioSource.Current => Current;
-		IEnumerable<Type> IAudioSource.SupportedTracks => SUPPORTED_TRACKS;
-
-		public void Play(IAudioTrack track)
-		{
-			Guard.AgainstUnsupportedType(track.GetType(), SUPPORTED_TRACK);
-			var clip = track.Play(this);
-			Guard.AgainstUnsupportedType(clip.GetType(), SUPPORTED_CLIP);
-
-			Current = (FMODAudioClip) clip;
-		}
+		IEnumerable<Type> IAudioSource.SupportedClips => SUPPORTED_CLIPS;
 
 		public void Stop()
 		{
@@ -72,6 +62,7 @@ namespace Depra.Sound.FMOD
 				return;
 			}
 
+			Current = clip;
 			foreach (var parameter in parameters)
 			{
 				Write(parameter);
