@@ -24,7 +24,7 @@ namespace Depra.Sound.FMOD
 
 		public void Play(FMODAudioSource source) => source.Play(new FMODAudioClip(_event), _parameters);
 
-		void IAudioTrack.Play(IAudioSource source) => Play((FMODAudioSource) source);
+		void IAudioTrack.Play(IAudioSource source) => source.Play(new FMODAudioClip(_event), _parameters);
 
 		AudioTrackSegment[] IAudioTrack.Deconstruct() => new[]
 			{ new AudioTrackSegment(new FMODAudioClip(_event), _parameters) };
