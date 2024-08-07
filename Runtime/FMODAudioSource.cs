@@ -87,12 +87,12 @@ namespace Depra.Sound.FMOD
 				EmptyParameter => RESULT.OK,
 				PitchParameter pitch => _lastInstance.setPitch(pitch.Value),
 				VolumeParameter volume => _lastInstance.setVolume(volume.Value),
+				TransformParameter target => AttachToTransform(_lastInstance, target.Value),
 				SingleParameter single => _lastInstance.setParameterByName(single.Name, single.Value),
 				IntegerParameter integer => _lastInstance.setParameterByName(integer.Name, integer.Value),
 				LabelParameter label => _lastInstance.setParameterByNameWithLabel(label.Name, label.Value),
 				PositionParameter position => _lastInstance.set3DAttributes(position.Value.To3DAttributes()),
 				RuntimePositionParameter => _lastInstance.set3DAttributes(transform.To3DAttributes()),
-				FollowTransform target => AttachToTransform(_lastInstance, target.Value),
 				FMODSingle single => _lastInstance.setParameterByName(single.Name, single.Value, single.IgnoreSeekSpeed),
 				FMODLabel label => _lastInstance.setParameterByNameWithLabel(label.Name, label.Value, label.IgnoreSeekSpeed),
 				FMODInteger integer => _lastInstance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed),
@@ -117,6 +117,7 @@ namespace Depra.Sound.FMOD
 					new PitchParameter(pitch),
 				_ when type == typeof(PositionParameter) && _lastInstance.get3DAttributes(out var attr) == RESULT.OK =>
 					new PositionParameter(new Vector3(attr.position.x, attr.position.y, attr.position.z)),
+				_ when type == typeof(TransformParameter) => new TransformParameter(transform),
 				_ => new NullParameter()
 			};
 		}
@@ -140,9 +141,9 @@ namespace Depra.Sound.FMOD
 			typeof(PitchParameter),
 			typeof(VolumeParameter),
 			typeof(SingleParameter),
-			typeof(FollowTransform),
 			typeof(IntegerParameter),
-			typeof(PositionParameter)
+			typeof(PositionParameter),
+			typeof(TransformParameter)
 		};
 
 		private RESULT AttachToTransform(EventInstance instance, Transform target)
