@@ -92,7 +92,7 @@ namespace Depra.Sound.FMOD
 				LabelParameter label => _lastInstance.setParameterByNameWithLabel(label.Name, label.Value),
 				PositionParameter position => _lastInstance.set3DAttributes(position.Value.To3DAttributes()),
 				RuntimePositionParameter => _lastInstance.set3DAttributes(transform.To3DAttributes()),
-				AttachedTransformParameter toAttach => _lastInstance.set3DAttributes(toAttach.Value.To3DAttributes()),
+				FollowTransform target => AttachToTransform(_lastInstance, target.Value),
 				FMODSingle single => _lastInstance.setParameterByName(single.Name, single.Value, single.IgnoreSeekSpeed),
 				FMODLabel label => _lastInstance.setParameterByNameWithLabel(label.Name, label.Value, label.IgnoreSeekSpeed),
 				FMODInteger integer => _lastInstance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed),
@@ -140,10 +140,16 @@ namespace Depra.Sound.FMOD
 			typeof(PitchParameter),
 			typeof(VolumeParameter),
 			typeof(SingleParameter),
+			typeof(FollowTransform),
 			typeof(IntegerParameter),
-			typeof(PositionParameter),
-			typeof(AttachedTransformParameter)
+			typeof(PositionParameter)
 		};
+
+		private RESULT AttachToTransform(EventInstance instance, Transform target)
+		{
+			RuntimeManager.AttachInstanceToGameObject(instance, target);
+			return RESULT.OK;
+		}
 
 		void IAudioSource.Play(IAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
 		{
