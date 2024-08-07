@@ -55,18 +55,4 @@ namespace Depra.Sound.FMOD
 			IgnoreSeekSpeed = ignoreSeekSpeed;
 		}
 	}
-
-	[Serializable]
-	[SerializeReferenceIcon("d_Transform Icon")]
-	public sealed class FollowTransform : IAudioSourceParameter
-	{
-		[field: SerializeField] public Transform Value { get; private set; }
-
-		public FollowTransform() { }
-		public FollowTransform(Transform value) => Value = value;
-	}
-
-	[Serializable]
-	[SerializeReferenceIcon("d_Transform Icon")]
-	public sealed class RuntimeFollowTransform : IAudioSourceParameter { }
 }
