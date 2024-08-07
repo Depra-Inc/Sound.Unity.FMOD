@@ -92,6 +92,7 @@ namespace Depra.Sound.FMOD
 				LabelParameter label => _lastInstance.setParameterByNameWithLabel(label.Name, label.Value),
 				PositionParameter position => _lastInstance.set3DAttributes(position.Value.To3DAttributes()),
 				RuntimePositionParameter => _lastInstance.set3DAttributes(transform.To3DAttributes()),
+				AttachedTransformParameter toAttach => _lastInstance.set3DAttributes(toAttach.Value.To3DAttributes()),
 				FMODSingle single => _lastInstance.setParameterByName(single.Name, single.Value, single.IgnoreSeekSpeed),
 				FMODLabel label => _lastInstance.setParameterByNameWithLabel(label.Name, label.Value, label.IgnoreSeekSpeed),
 				FMODInteger integer => _lastInstance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed),
@@ -141,7 +142,7 @@ namespace Depra.Sound.FMOD
 			typeof(SingleParameter),
 			typeof(IntegerParameter),
 			typeof(PositionParameter),
-			typeof(RuntimePositionParameter)
+			typeof(AttachedTransformParameter)
 		};
 
 		void IAudioSource.Play(IAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
