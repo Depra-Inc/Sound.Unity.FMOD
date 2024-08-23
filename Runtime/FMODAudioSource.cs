@@ -158,13 +158,20 @@ namespace Depra.Sound.FMOD
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private RESULT AttachToTransform(EventInstance instance, Transform target)
 		{
-			var attributes = transform.TryGetComponent(out Rigidbody body)
-				? RuntimeUtils.To3DAttributes(target, body)
-				: RuntimeUtils.To3DAttributes(target);
-
+			var attributes = GetAttributes(target);
 			instance.set3DAttributes(attributes);
+
 			return RESULT.OK;
 		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private ATTRIBUTES_3D GetAttributes(Transform target) => target switch
+		{
+			null => transform.To3DAttributes(),
+			_ when target.TryGetComponent(out Rigidbody body) => RuntimeUtils.To3DAttributes(target, body),
+			_ when target.TryGetComponent(out Rigidbody2D body2D) => RuntimeUtils.To3DAttributes(target, body2D),
+			_ => target.To3DAttributes(),
+		};
 
 		void IAudioSource.Play(IAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
 		{
