@@ -168,8 +168,11 @@ namespace Depra.Sound.FMOD
 		private ATTRIBUTES_3D GetAttributes(Transform target) => target switch
 		{
 			null => transform.To3DAttributes(),
+#if UNITY_PHYSICS
 			_ when target.TryGetComponent(out Rigidbody body) => RuntimeUtils.To3DAttributes(target, body),
+#elif UNITY_PHYSICS2D
 			_ when target.TryGetComponent(out Rigidbody2D body2D) => RuntimeUtils.To3DAttributes(target, body2D),
+#endif
 			_ => target.To3DAttributes(),
 		};
 
