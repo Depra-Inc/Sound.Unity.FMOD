@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Depra.Sound.Configuration;
 using Depra.Sound.Exceptions;
 using Depra.Sound.Source;
@@ -46,6 +47,7 @@ namespace Depra.Sound.FMOD
 		IAudioClip IAudioSource.Current => Current;
 		IEnumerable<Type> IAudioSource.SupportedClips => SUPPORTED_CLIPS;
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Stop()
 		{
 			if (IsPlaying)
@@ -54,6 +56,7 @@ namespace Depra.Sound.FMOD
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Play(FMODAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
 		{
 			_lastInstance = RuntimeManager.CreateInstance(clip);
@@ -80,6 +83,7 @@ namespace Depra.Sound.FMOD
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Write(IAudioSourceParameter parameter)
 		{
 			var result = parameter switch
@@ -94,8 +98,10 @@ namespace Depra.Sound.FMOD
 				PositionParameter position => _lastInstance.set3DAttributes(position.Value.To3DAttributes()),
 				RuntimePositionParameter => _lastInstance.set3DAttributes(transform.To3DAttributes()),
 				FMODSingle single => _lastInstance.setParameterByName(single.Name, single.Value, single.IgnoreSeekSpeed),
-				FMODLabel label => _lastInstance.setParameterByNameWithLabel(label.Name, label.Value, label.IgnoreSeekSpeed),
-				FMODInteger integer => _lastInstance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed),
+				FMODLabel label => _lastInstance.setParameterByNameWithLabel(label.Name, label.Value,
+					label.IgnoreSeekSpeed),
+				FMODInteger integer => _lastInstance.setParameterByName(integer.Name, integer.Value,
+					integer.IgnoreSeekSpeed),
 				_ => RESULT.ERR_INVALID_PARAM
 			};
 			if (result != RESULT.OK)
@@ -105,6 +111,7 @@ namespace Depra.Sound.FMOD
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public IAudioSourceParameter Read(Type type)
 		{
 			return _lastInstance.isValid() ? ReadInternal() : new NullParameter();
@@ -122,6 +129,7 @@ namespace Depra.Sound.FMOD
 			};
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void OnStop(AudioStopReason reason)
 		{
 			_lastInstance.stop(_stopMode);
@@ -131,6 +139,7 @@ namespace Depra.Sound.FMOD
 			Stopped?.Invoke(reason);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private IEnumerable<Type> SupportedParameterTypes() => new[]
 		{
 			typeof(FMODLabel),
@@ -146,9 +155,14 @@ namespace Depra.Sound.FMOD
 			typeof(TransformParameter)
 		};
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private RESULT AttachToTransform(EventInstance instance, Transform target)
 		{
-			RuntimeManager.AttachInstanceToGameObject(instance, target);
+			var attributes = transform.TryGetComponent(out Rigidbody body)
+				? RuntimeUtils.To3DAttributes(target, body)
+				: RuntimeUtils.To3DAttributes(target);
+
+			instance.set3DAttributes(attributes);
 			return RESULT.OK;
 		}
 
