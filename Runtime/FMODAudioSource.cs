@@ -121,22 +121,17 @@ namespace Depra.Sound.FMOD
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public IAudioSourceParameter Read(Type type)
+		public IAudioSourceParameter Read(Type type) => type switch
 		{
-			return _cachedInstance.isValid() ? ReadInternal() : new NullParameter();
-
-			IAudioSourceParameter ReadInternal() => type switch
-			{
-				_ when type == typeof(VolumeParameter) && _cachedInstance.getVolume(out var volume) == RESULT.OK =>
-					new VolumeParameter(volume),
-				_ when type == typeof(PitchParameter) && _cachedInstance.getPitch(out var pitch) == RESULT.OK =>
-					new PitchParameter(pitch),
-				_ when type == typeof(PositionParameter) && _cachedInstance.get3DAttributes(out var attr) == RESULT.OK =>
-					new PositionParameter(new Vector3(attr.position.x, attr.position.y, attr.position.z)),
-				_ when type == typeof(TransformParameter) => new TransformParameter(transform),
-				_ => new NullParameter()
-			};
-		}
+			_ when type == typeof(VolumeParameter) && _cachedInstance.getVolume(out var volume) == RESULT.OK =>
+				new VolumeParameter(volume),
+			_ when type == typeof(PitchParameter) && _cachedInstance.getPitch(out var pitch) == RESULT.OK =>
+				new PitchParameter(pitch),
+			_ when type == typeof(PositionParameter) && _cachedInstance.get3DAttributes(out var attr) == RESULT.OK =>
+				new PositionParameter(new Vector3(attr.position.x, attr.position.y, attr.position.z)),
+			_ when type == typeof(TransformParameter) => new TransformParameter(transform),
+			_ => new NullParameter()
+		};
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void OnStop(AudioStopReason reason)
