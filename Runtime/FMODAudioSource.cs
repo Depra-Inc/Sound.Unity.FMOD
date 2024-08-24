@@ -26,22 +26,33 @@ namespace Depra.Sound.FMOD
 		private static readonly Type SUPPORTED_CLIP = typeof(FMODAudioClip);
 		private static readonly Type[] SUPPORTED_CLIPS = { SUPPORTED_CLIP };
 
-		private EventInstance _lastInstance;
+		private EventInstance _cachedInstance;
 
 		public event Action Started;
 		public event Action<AudioStopReason> Stopped;
 
 		private void OnDestroy()
 		{
-			if (_lastInstance.isValid())
+			if (_cachedInstance.isValid())
 			{
-				_lastInstance.release();
+				_cachedInstance.release();
 			}
 		}
 
-		public bool IsPlaying => _lastInstance.isValid() &&
-		                         _lastInstance.getPlaybackState(out var state) == RESULT.OK &&
-		                         state == PLAYBACK_STATE.PLAYING;
+		public bool IsPlaying
+		{
+			get
+			{
+				if (_cachedInstance.isValid() == false || _cachedInstance.getPlaybackState(out var state) != RESULT.OK)
+				{
+					Debug.LogWarningFormat(LOG_FORMAT, $"'{_cachedInstance}' is not valid!");
+					return false;
+				}
+
+				Debug.LogFormat(LOG_FORMAT, $"'{_cachedInstance}' playback state: {state}");
+				return state == PLAYBACK_STATE.PLAYING;
+			}
+		}
 
 		public FMODAudioClip Current { get; private set; }
 		IAudioClip IAudioSource.Current => Current;
@@ -59,8 +70,8 @@ namespace Depra.Sound.FMOD
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Play(FMODAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
 		{
-			_lastInstance = RuntimeManager.CreateInstance(clip);
-			if (_lastInstance.isValid() == false)
+			_cachedInstance = RuntimeManager.CreateInstance(clip);
+			if (_cachedInstance.isValid() == false)
 			{
 				return;
 			}
@@ -71,7 +82,7 @@ namespace Depra.Sound.FMOD
 				Write(parameter);
 			}
 
-			var result = _lastInstance.start();
+			var result = _cachedInstance.start();
 			if (result == RESULT.OK)
 			{
 				Started?.Invoke();
@@ -89,19 +100,17 @@ namespace Depra.Sound.FMOD
 			var result = parameter switch
 			{
 				EmptyParameter => RESULT.OK,
-				PitchParameter pitch => _lastInstance.setPitch(pitch.Value),
-				VolumeParameter volume => _lastInstance.setVolume(volume.Value),
-				TransformParameter target => AttachToTransform(_lastInstance, target.Value),
-				SingleParameter single => _lastInstance.setParameterByName(single.Name, single.Value),
-				IntegerParameter integer => _lastInstance.setParameterByName(integer.Name, integer.Value),
-				LabelParameter label => _lastInstance.setParameterByNameWithLabel(label.Name, label.Value),
-				PositionParameter position => _lastInstance.set3DAttributes(position.Value.To3DAttributes()),
-				RuntimePositionParameter => _lastInstance.set3DAttributes(transform.To3DAttributes()),
-				FMODSingle single => _lastInstance.setParameterByName(single.Name, single.Value, single.IgnoreSeekSpeed),
-				FMODLabel label => _lastInstance.setParameterByNameWithLabel(label.Name, label.Value,
-					label.IgnoreSeekSpeed),
-				FMODInteger integer => _lastInstance.setParameterByName(integer.Name, integer.Value,
-					integer.IgnoreSeekSpeed),
+				PitchParameter pitch => _cachedInstance.setPitch(pitch.Value),
+				VolumeParameter volume => _cachedInstance.setVolume(volume.Value),
+				TransformParameter target => AttachToTransform(_cachedInstance, target.Value),
+				SingleParameter single => _cachedInstance.setParameterByName(single.Name, single.Value),
+				IntegerParameter integer => _cachedInstance.setParameterByName(integer.Name, integer.Value),
+				LabelParameter label => _cachedInstance.setParameterByNameWithLabel(label.Name, label.Value),
+				PositionParameter position => _cachedInstance.set3DAttributes(position.Value.To3DAttributes()),
+				RuntimePositionParameter => _cachedInstance.set3DAttributes(transform.To3DAttributes()),
+				FMODSingle single => _cachedInstance.setParameterByName(single.Name, single.Value, single.IgnoreSeekSpeed),
+				FMODLabel label => _cachedInstance.setParameterByNameWithLabel(label.Name, label.Value, label.IgnoreSeekSpeed),
+				FMODInteger integer => _cachedInstance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed),
 				_ => RESULT.ERR_INVALID_PARAM
 			};
 			if (result != RESULT.OK)
@@ -114,15 +123,15 @@ namespace Depra.Sound.FMOD
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public IAudioSourceParameter Read(Type type)
 		{
-			return _lastInstance.isValid() ? ReadInternal() : new NullParameter();
+			return _cachedInstance.isValid() ? ReadInternal() : new NullParameter();
 
 			IAudioSourceParameter ReadInternal() => type switch
 			{
-				_ when type == typeof(VolumeParameter) && _lastInstance.getVolume(out var volume) == RESULT.OK =>
+				_ when type == typeof(VolumeParameter) && _cachedInstance.getVolume(out var volume) == RESULT.OK =>
 					new VolumeParameter(volume),
-				_ when type == typeof(PitchParameter) && _lastInstance.getPitch(out var pitch) == RESULT.OK =>
+				_ when type == typeof(PitchParameter) && _cachedInstance.getPitch(out var pitch) == RESULT.OK =>
 					new PitchParameter(pitch),
-				_ when type == typeof(PositionParameter) && _lastInstance.get3DAttributes(out var attr) == RESULT.OK =>
+				_ when type == typeof(PositionParameter) && _cachedInstance.get3DAttributes(out var attr) == RESULT.OK =>
 					new PositionParameter(new Vector3(attr.position.x, attr.position.y, attr.position.z)),
 				_ when type == typeof(TransformParameter) => new TransformParameter(transform),
 				_ => new NullParameter()
@@ -132,9 +141,9 @@ namespace Depra.Sound.FMOD
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void OnStop(AudioStopReason reason)
 		{
-			_lastInstance.stop(_stopMode);
-			_lastInstance.release();
-			_lastInstance = default;
+			_cachedInstance.stop(_stopMode);
+			_cachedInstance.release();
+			_cachedInstance = default;
 
 			Stopped?.Invoke(reason);
 		}
