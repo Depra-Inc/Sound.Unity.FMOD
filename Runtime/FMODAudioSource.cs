@@ -1,5 +1,5 @@
 ﻿// SPDX-License-Identifier: Apache-2.0
-// © 2024 Nikolay Melnikov <n.melnikov@depra.org>
+// © 2024-2025 Nikolay Melnikov <n.melnikov@depra.org>
 
 using System;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ using FMOD;
 using FMOD.Studio;
 using FMODUnity;
 using UnityEngine;
-using static Depra.Sound.Module;
+using static Depra.Sound.FMOD.Module;
 using Debug = UnityEngine.Debug;
 using STOP_MODE = FMOD.Studio.STOP_MODE;
 
@@ -22,6 +22,7 @@ namespace Depra.Sound.FMOD
 	public sealed class FMODAudioSource : SceneAudioSource, IAudioSource<FMODAudioClip>
 	{
 		[SerializeField] private STOP_MODE _stopMode;
+		[SerializeField] private bool _verbose;
 
 		private static readonly Type SUPPORTED_CLIP = typeof(FMODAudioClip);
 		private static readonly Type[] SUPPORTED_CLIPS = { SUPPORTED_CLIP };
@@ -45,11 +46,11 @@ namespace Depra.Sound.FMOD
 			{
 				if (_cachedInstance.isValid() == false || _cachedInstance.getPlaybackState(out var state) != RESULT.OK)
 				{
-					Debug.LogWarningFormat(LOG_FORMAT, $"'{_cachedInstance}' is not valid!");
+					VerboseInfo($"'{_cachedInstance}' is not valid!");
 					return false;
 				}
 
-				Debug.LogFormat(LOG_FORMAT, $"'{_cachedInstance}' playback state: {state}");
+				VerboseInfo($"'{_cachedInstance}' playback state: {state}");
 				return state == PLAYBACK_STATE.PLAYING;
 			}
 		}
@@ -71,7 +72,7 @@ namespace Depra.Sound.FMOD
 		public void Play(FMODAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
 		{
 			_cachedInstance = RuntimeManager.CreateInstance(clip);
-			if (_cachedInstance.isValid() == false)
+			if (!_cachedInstance.isValid())
 			{
 				return;
 			}
@@ -89,7 +90,7 @@ namespace Depra.Sound.FMOD
 			}
 			else
 			{
-				Debug.LogErrorFormat(LOG_FORMAT, $"Failed to start audio: {result}");
+				VerboseError($"Failed to start audio: {result}");
 				OnStop(AudioStopReason.ERROR);
 			}
 		}
@@ -115,8 +116,7 @@ namespace Depra.Sound.FMOD
 			};
 			if (result != RESULT.OK)
 			{
-				Debug.LogErrorFormat(LOG_FORMAT,
-					$"Parameter '{parameter.GetType().Name}' cannot be applied to '{name}' ({nameof(FMODAudioSource)}) with result: '{result}'");
+				VerboseError($"Parameter '{parameter.GetType().Name}' cannot be applied to '{name}' ({nameof(FMODAudioSource)}) with result: '{result}'");
 			}
 		}
 
@@ -144,7 +144,7 @@ namespace Depra.Sound.FMOD
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private IEnumerable<Type> SupportedParameterTypes() => new[]
+		private static IEnumerable<Type> SupportedParameterTypes() => new[]
 		{
 			typeof(FMODLabel),
 			typeof(FMODSingle),
@@ -169,9 +169,29 @@ namespace Depra.Sound.FMOD
 		void IAudioSource.Play(IAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
 		{
 			Guard.AgainstUnsupportedType(clip.GetType(), SUPPORTED_CLIP);
-			Play((FMODAudioClip) clip, parameters);
+			Play((FMODAudioClip)clip, parameters);
 		}
 
 		IEnumerable<IAudioSourceParameter> IAudioSource.EnumerateParameters() => SupportedParameterTypes().Select(Read);
+
+		private const string LOG_FORMAT = "[Sound] {0}";
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void VerboseInfo(string message)
+		{
+			if (_verbose)
+			{
+				Debug.LogFormat(LOG_FORMAT, message);
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void VerboseError(string message)
+		{
+			if (_verbose)
+			{
+				Debug.LogErrorFormat(LOG_FORMAT, message);
+			}
+		}
 	}
 }
