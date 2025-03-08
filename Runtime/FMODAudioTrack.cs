@@ -1,7 +1,8 @@
 ﻿// SPDX-License-Identifier: Apache-2.0
-// © 2024 Nikolay Melnikov <n.melnikov@depra.org>
+// © 2024-2025 Depra <n.melnikov@depra.org>
 
 using System;
+using System.Collections.Generic;
 using Depra.SerializeReference.Extensions;
 using FMODUnity;
 using UnityEngine;
@@ -11,7 +12,7 @@ namespace Depra.Sound.FMOD
 	[Serializable]
 	[SerializeReferenceIcon("d_AudioClip Icon")]
 	[SerializeReferenceMenuPath(nameof(FMODAudioTrack))]
-	public sealed class FMODAudioTrack : IAudioTrack<FMODAudioSource>
+	public sealed class FMODAudioTrack : IAudioTrack
 	{
 		[SerializeField] private EventReference _event;
 
@@ -22,13 +23,7 @@ namespace Depra.Sound.FMOD
 		public FMODAudioTrack() { }
 		public FMODAudioTrack(EventReference @event) => _event = @event;
 
-		public void Play(FMODAudioSource source) => source.Play(new FMODAudioClip(_event), _parameters);
-
-		void IAudioTrack.Play(IAudioSource source) => source.Play(new FMODAudioClip(_event), _parameters);
-
-		AudioTrackSegment[] IAudioTrack.Deconstruct() => new[]
-		{
-			new AudioTrackSegment(new FMODAudioClip(_event), _parameters)
-		};
+		void IAudioTrack.ExtractSegments(IList<AudioTrackSegment> segments) =>
+			segments.Add(new AudioTrackSegment(new FMODAudioClip(_event), _parameters));
 	}
 }
