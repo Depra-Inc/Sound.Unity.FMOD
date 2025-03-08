@@ -1,13 +1,13 @@
 ﻿// SPDX-License-Identifier: Apache-2.0
-// © 2024-2025 Nikolay Melnikov <n.melnikov@depra.org>
+// © 2024-2025 Depra <n.melnikov@depra.org>
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Depra.Sound.Configuration;
 using Depra.Sound.Exceptions;
-using Depra.Sound.Source;
 using FMOD;
 using FMOD.Studio;
 using FMODUnity;
@@ -22,10 +22,23 @@ namespace Depra.Sound.FMOD
 	public sealed class FMODAudioSource : SceneAudioSource, IAudioSource<FMODAudioClip>
 	{
 		[SerializeField] private STOP_MODE _stopMode;
-		[SerializeField] private bool _verbose;
 
 		private static readonly Type SUPPORTED_CLIP = typeof(FMODAudioClip);
 		private static readonly Type[] SUPPORTED_CLIPS = { SUPPORTED_CLIP };
+		private static readonly Type[] SUPPORTED_PARAMETERS =
+		{
+			typeof(FMODLabel),
+			typeof(FMODSingle),
+			typeof(FMODInteger),
+			typeof(EmptyParameter),
+			typeof(LabelParameter),
+			typeof(PitchParameter),
+			typeof(VolumeParameter),
+			typeof(SingleParameter),
+			typeof(IntegerParameter),
+			typeof(PositionParameter),
+			typeof(TransformParameter)
+		};
 
 		private EventInstance _cachedInstance;
 
@@ -144,54 +157,26 @@ namespace Depra.Sound.FMOD
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static IEnumerable<Type> SupportedParameterTypes() => new[]
-		{
-			typeof(FMODLabel),
-			typeof(FMODSingle),
-			typeof(FMODInteger),
-			typeof(EmptyParameter),
-			typeof(LabelParameter),
-			typeof(PitchParameter),
-			typeof(VolumeParameter),
-			typeof(SingleParameter),
-			typeof(IntegerParameter),
-			typeof(PositionParameter),
-			typeof(TransformParameter)
-		};
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private RESULT AttachToTransform(EventInstance instance, Transform target)
 		{
 			RuntimeManager.AttachInstanceToGameObject(instance, target);
 			return RESULT.OK;
 		}
 
-		void IAudioSource.Play(IAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
+		void IAudioSource.Play(IAudioClip clip, IList<IAudioSourceParameter> parameters)
 		{
 			Guard.AgainstUnsupportedType(clip.GetType(), SUPPORTED_CLIP);
 			Play((FMODAudioClip)clip, parameters);
 		}
 
-		IEnumerable<IAudioSourceParameter> IAudioSource.EnumerateParameters() => SupportedParameterTypes().Select(Read);
+		IEnumerable<IAudioSourceParameter> IAudioSource.EnumerateParameters() => SUPPORTED_PARAMETERS.Select(Read);
 
-		private const string LOG_FORMAT = "[Sound] {0}";
-
+		[Conditional("SOUND_DEBUG")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void VerboseInfo(string message)
-		{
-			if (_verbose)
-			{
-				Debug.LogFormat(LOG_FORMAT, message);
-			}
-		}
+		private void VerboseInfo(string message) => Debug.LogFormat(LOG_FORMAT, message);
 
+		[Conditional("SOUND_DEBUG")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void VerboseError(string message)
-		{
-			if (_verbose)
-			{
-				Debug.LogErrorFormat(LOG_FORMAT, message);
-			}
-		}
+		private void VerboseError(string message) => Debug.LogErrorFormat(LOG_FORMAT, message);
 	}
 }
