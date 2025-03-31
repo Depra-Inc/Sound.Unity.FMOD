@@ -100,6 +100,7 @@ namespace Depra.Sound.FMOD
 			if (result == RESULT.OK)
 			{
 				Started?.Invoke();
+                _cachedInstance.release();
 			}
 			else
 			{
