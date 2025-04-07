@@ -57,14 +57,13 @@ namespace Depra.Sound.FMOD
 		{
 			get
 			{
-				if (_cachedInstance.isValid() == false || _cachedInstance.getPlaybackState(out var state) != RESULT.OK)
+				if (!_cachedInstance.isValid() || _cachedInstance.getPlaybackState(out var state) != RESULT.OK)
 				{
 					VerboseInfo($"'{_cachedInstance}' is not valid!");
 					return false;
 				}
 
-				VerboseInfo($"'{_cachedInstance}' playback state: {state}");
-				return state == PLAYBACK_STATE.PLAYING;
+				return state != PLAYBACK_STATE.STOPPED && state != PLAYBACK_STATE.STOPPING;
 			}
 		}
 
