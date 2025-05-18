@@ -30,6 +30,7 @@ namespace Depra.Sound.FMOD
 			typeof(FMODLabel),
 			typeof(FMODSingle),
 			typeof(FMODInteger),
+			typeof(LoopParameter),
 			typeof(EmptyParameter),
 			typeof(LabelParameter),
 			typeof(PitchParameter),
@@ -83,10 +84,14 @@ namespace Depra.Sound.FMOD
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Play(FMODAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
 		{
-			_cachedInstance = RuntimeManager.CreateInstance(clip);
-			if (!_cachedInstance.isValid())
+			var newClip = !clip.Equals(Current);
+			if (newClip)
 			{
-				return;
+				_cachedInstance = RuntimeManager.CreateInstance(clip);
+				if (!_cachedInstance.isValid())
+				{
+					return;
+				}
 			}
 
 			Current = clip;
@@ -95,16 +100,9 @@ namespace Depra.Sound.FMOD
 				Write(parameter);
 			}
 
-			var result = _cachedInstance.start();
-			if (result == RESULT.OK)
+			if (newClip)
 			{
-				Started?.Invoke();
-                _cachedInstance.release();
-			}
-			else
-			{
-				VerboseError($"Failed to start audio: {result}");
-				OnStop(AudioStopReason.ERROR);
+				StartClip(_cachedInstance);
 			}
 		}
 
@@ -122,6 +120,7 @@ namespace Depra.Sound.FMOD
 				LabelParameter label => _cachedInstance.setParameterByNameWithLabel(label.Name, label.Value),
 				PositionParameter position => _cachedInstance.set3DAttributes(position.Value.To3DAttributes()),
 				RuntimePositionParameter => _cachedInstance.set3DAttributes(transform.To3DAttributes()),
+				LoopParameter loop => _cachedInstance.setParameterByName(FMODLoop.DEFAULT_NAME, FMODLoop.Convert(loop)),
 				FMODSingle single => _cachedInstance.setParameterByName(single.Name, single.Value, single.IgnoreSeekSpeed),
 				FMODLabel label => _cachedInstance.setParameterByNameWithLabel(label.Name, label.Value, label.IgnoreSeekSpeed),
 				FMODInteger integer => _cachedInstance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed),
@@ -150,6 +149,22 @@ namespace Depra.Sound.FMOD
 		};
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void StartClip(EventInstance instance)
+		{
+			var result = instance.start();
+			if (result == RESULT.OK)
+			{
+				Started?.Invoke();
+				instance.release();
+			}
+			else
+			{
+				VerboseError($"Failed to start audio: {result}");
+				OnStop(AudioStopReason.ERROR);
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void OnStop(AudioStopReason reason)
 		{
 			_cachedInstance.stop(_stopMode);
@@ -174,11 +189,11 @@ namespace Depra.Sound.FMOD
 
 		IEnumerable<IAudioSourceParameter> IAudioSource.EnumerateParameters() => SUPPORTED_PARAMETERS.Select(Read);
 
-		[Conditional("SOUND_DEBUG")]
+		[Conditional(SOUND_DEBUG)]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void VerboseInfo(string message) => Debug.LogFormat(LOG_FORMAT, message);
 
-		[Conditional("SOUND_DEBUG")]
+		[Conditional(SOUND_DEBUG)]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void VerboseError(string message) => Debug.LogErrorFormat(LOG_FORMAT, message);
 	}

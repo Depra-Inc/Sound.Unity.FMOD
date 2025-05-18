@@ -1,11 +1,12 @@
 ﻿// SPDX-License-Identifier: Apache-2.0
 // © 2024-2025 Depra <n.melnikov@depra.org>
 
+using System;
 using FMODUnity;
 
 namespace Depra.Sound.FMOD
 {
-	public readonly struct FMODAudioClip : IAudioClip
+	public readonly struct FMODAudioClip : IAudioClip, IEquatable<FMODAudioClip>
 	{
 		public static implicit operator EventReference(FMODAudioClip clip) => clip._event;
 
@@ -24,5 +25,9 @@ namespace Depra.Sound.FMOD
 		}
 
 		public override string ToString() => Name;
+		public override int GetHashCode() => _event.Guid.GetHashCode();
+
+		public bool Equals(FMODAudioClip other) => _event.Guid == other._event.Guid;
+		public override bool Equals(object obj) => obj is FMODAudioClip other && Equals(other);
 	}
 }
