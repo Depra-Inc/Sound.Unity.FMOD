@@ -109,7 +109,7 @@ namespace Depra.Sound.FMOD
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Write(IAudioSourceParameter parameter)
+		public bool Write(IAudioSourceParameter parameter)
 		{
 			var result = parameter switch
 			{
@@ -127,10 +127,13 @@ namespace Depra.Sound.FMOD
 				FMODInteger integer => _cachedInstance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed),
 				_ => RESULT.ERR_INVALID_PARAM
 			};
-			if (result != RESULT.OK)
+			if (result == RESULT.OK)
 			{
-				VerboseError($"Parameter '{parameter.GetType().Name}' cannot be applied to '{name}' ({nameof(FMODAudioSource)}) with result: '{result}'");
+				return true;
 			}
+
+			VerboseError($"Parameter '{parameter.GetType().Name}' cannot be applied to '{name}' ({nameof(FMODAudioSource)}) with result: '{result}'");
+			return false;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
