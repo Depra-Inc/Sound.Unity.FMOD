@@ -22,6 +22,7 @@ namespace Depra.Sound.FMOD
 	public sealed class FMODAudioSource : SceneAudioSource, IAudioSource<FMODAudioClip>
 	{
 		[SerializeField] private STOP_MODE _stopMode;
+		[SerializeField] private bool _autoRelease = true;
 
 		private static readonly Type SUPPORTED_CLIP = typeof(FMODAudioClip);
 		private static readonly Type[] SUPPORTED_CLIPS = { SUPPORTED_CLIP };
@@ -155,7 +156,10 @@ namespace Depra.Sound.FMOD
 			if (result == RESULT.OK)
 			{
 				Started?.Invoke();
-				instance.release();
+				if (_autoRelease)
+				{
+					instance.release();
+				}
 			}
 			else
 			{
