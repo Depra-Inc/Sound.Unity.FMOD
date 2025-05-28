@@ -3,14 +3,17 @@
 
 using System;
 using FMODUnity;
+using UnityEngine;
 
 namespace Depra.Sound.FMOD
 {
-	public readonly struct FMODAudioClip : IAudioClip, IEquatable<FMODAudioClip>
+	[Serializable]
+	public struct FMODAudioClip : IAudioClip, IEquatable<FMODAudioClip>
 	{
 		public static implicit operator EventReference(FMODAudioClip clip) => clip._event;
 
-		private readonly EventReference _event;
+		[SerializeField] private EventReference _event;
+
 		public FMODAudioClip(EventReference @event) => _event = @event;
 
 		public string Name => _event.ToString();
