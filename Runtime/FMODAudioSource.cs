@@ -76,6 +76,7 @@ namespace Depra.Sound.FMOD
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Stop()
 		{
+            Current = default;
 			if (IsPlaying)
 			{
 				OnStop(AudioStopReason.STOPPED);
