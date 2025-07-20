@@ -86,14 +86,10 @@ namespace Depra.Sound.FMOD
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Play(FMODAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
 		{
-			var newClip = !clip.Equals(Current);
-			if (newClip)
+			_cachedInstance = RuntimeManager.CreateInstance(clip);
+			if (!_cachedInstance.isValid())
 			{
-				_cachedInstance = RuntimeManager.CreateInstance(clip);
-				if (!_cachedInstance.isValid())
-				{
-					return;
-				}
+				return;
 			}
 
 			Current = clip;
@@ -102,10 +98,7 @@ namespace Depra.Sound.FMOD
 				Write(parameter);
 			}
 
-			if (newClip)
-			{
-				StartClip(_cachedInstance);
-			}
+			StartClip(_cachedInstance);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
