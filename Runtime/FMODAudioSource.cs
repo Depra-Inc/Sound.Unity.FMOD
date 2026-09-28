@@ -54,7 +54,7 @@ namespace Depra.Sound.FMOD
 
 		public void Play(IAudioClip clip)
 		{
-			Guard.AgainstUnsupportedType(clip.GetType(), SUPPORTED_CLIP);
+			Guard.AgainstUnsupportedType(clip, SUPPORTED_CLIP);
 			var fmodClip = (FMODAudioClip)clip;
 			_cachedInstance = RuntimeManager.CreateInstance(fmodClip);
 			if (!_cachedInstance.isValid())
@@ -67,10 +67,10 @@ namespace Depra.Sound.FMOD
 		}
 
 		public void Play(IAudioClip clip,
-			ReadOnlySpan<AudioParameter> staticParams,
-			ReadOnlySpan<AudioParameter> dynamicParams)
+			ReadOnlySpan<AudioParam> staticParams,
+			ReadOnlySpan<AudioParam> dynamicParams)
 		{
-			Guard.AgainstUnsupportedType(clip.GetType(), SUPPORTED_CLIP);
+			Guard.AgainstUnsupportedType(clip, SUPPORTED_CLIP);
 			var fmodClip = (FMODAudioClip)clip;
 			_cachedInstance = RuntimeManager.CreateInstance(fmodClip);
 			if (!_cachedInstance.isValid())
@@ -92,43 +92,43 @@ namespace Depra.Sound.FMOD
 			StartClip(_cachedInstance);
 		}
 
-		public void SetParameter(in AudioParameter parameter)
+		public void SetParameter(in AudioParam parameter)
 		{
 			RESULT result;
 			var parameterId = parameter.Id;
-			if (parameterId == AudioParameterId.Volume && parameter.Type == AudioParameterType.FLOAT)
+			if (parameterId == AudioParamId.Volume && parameter.Type == AudioParamType.FLOAT)
 			{
 				result = _cachedInstance.setVolume(parameter.FloatValue);
 			}
-			else if (parameterId == AudioParameterId.Loop && parameter.Type == AudioParameterType.BOOL)
+			else if (parameterId == AudioParamId.Loop && parameter.Type == AudioParamType.BOOL)
 			{
 				result = _cachedInstance.setParameterByName("Loop", parameter.IntegerValue);
 			}
-			else if (parameterId == AudioParameterId.Pan && parameter.Type == AudioParameterType.FLOAT)
+			else if (parameterId == AudioParamId.Pan && parameter.Type == AudioParamType.FLOAT)
 			{
 				result = RESULT.ERR_UNSUPPORTED;
 				// FMOD does not have a direct pan parameter.
 			}
-			else if (parameterId == AudioParameterId.Pitch && parameter.Type == AudioParameterType.FLOAT)
+			else if (parameterId == AudioParamId.Pitch && parameter.Type == AudioParamType.FLOAT)
 			{
 				result = _cachedInstance.setPitch(parameter.FloatValue);
 			}
-			else if (parameterId == Audio3DParameterId.Position && parameter.Type == AudioParameterType.VECTOR3)
+			else if (parameterId == UnityAudioParamId.Position && parameter.Type == AudioParamType.VECTOR3)
 			{
 				var position = new Vector3(parameter.Float0, parameter.Float1, parameter.Float2);
 				result = _cachedInstance.set3DAttributes(position.To3DAttributes());
 			}
-			else if (parameterId == Audio3DParameterId.Transform && parameter.Type == AudioParameterType.REFERENCE &&
+			else if (parameterId == UnityAudioParamId.Transform && parameter.Type == AudioParamType.REFERENCE &&
 			         parameter.ReferenceValue is Transform transformParameter)
 			{
 				RuntimeManager.AttachInstanceToGameObject(_cachedInstance, transformParameter);
 				result = RESULT.OK;
 			}
-			else if (parameterId == Audio3DParameterId.LabeledInt)
+			else if (parameterId == UnityAudioParamId.LabeledInt)
 			{
 				result = _cachedInstance.setParameterByName(parameter.ReferenceValue as string, parameter.IntegerValue);
 			}
-			else if (parameterId == Audio3DParameterId.LabeledFloat)
+			else if (parameterId == UnityAudioParamId.LabeledFloat)
 			{
 				result = _cachedInstance.setParameterByName(parameter.ReferenceValue as string, parameter.FloatValue);
 			}

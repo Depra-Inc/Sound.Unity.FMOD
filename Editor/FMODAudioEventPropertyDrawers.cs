@@ -55,8 +55,8 @@ namespace Depra.Sound.FMOD.Editor
 		}
 	}
 
-	[CustomPropertyDrawer(typeof(FMODAudioParameterOverride))]
-	public sealed class FMODAudioParameterOverrideDrawer : PropertyDrawer
+	[CustomPropertyDrawer(typeof(FMODAudioParamOverride))]
+	public sealed class FMODAudioParamOverrideDrawer : PropertyDrawer
 	{
 		public override float GetPropertyHeight(SerializedProperty property, GUIContent label) =>
 			EditorGUIUtility.singleLineHeight;

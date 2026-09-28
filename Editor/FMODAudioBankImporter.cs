@@ -173,10 +173,10 @@ namespace Depra.Sound.FMOD.Editor
 			AssetDatabase.SaveAssets();
 		}
 
-		private static FMODAudioParameterOverride CreateParameter(EditorParamRef parameter)
+		private static FMODAudioParamOverride CreateParameter(EditorParamRef parameter)
 		{
 			var supported = parameter.Type == ParameterType.Continuous || parameter.Type == ParameterType.Discrete;
-			return new FMODAudioParameterOverride
+			return new FMODAudioParamOverride
 			{
 				Name = parameter.Name,
 				Minimum = parameter.Min,

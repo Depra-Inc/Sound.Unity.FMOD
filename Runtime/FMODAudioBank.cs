@@ -111,24 +111,26 @@ namespace Depra.Sound.FMOD
 	public sealed class FMODAudioEventDescription : IAudioEventVariant
 	{
 		[SerializeField] private FMODAudioClip _clip;
-		[SerializeField] private List<FMODAudioParameterOverride> _parameters = new();
+		[SerializeField] private List<FMODAudioParamOverride> _parameters = new();
 		[SerializeField] private bool _is3D;
 
 		public IAudioClip Clip => _clip;
 		public EventReference Event => _clip.Event;
-		public IReadOnlyList<FMODAudioParameterOverride> Parameters => _parameters;
+		public IReadOnlyList<FMODAudioParamOverride> Parameters => _parameters;
 		public bool Is3D => _is3D;
 
 		public IAudioEventDescription Compile()
 		{
-			var parameters = new List<AudioParameter>();
+			var parameters = new List<AudioParam>();
 			foreach (var parameter in _parameters)
 			{
 				if (parameter.Enabled && parameter.IsSupported)
 				{
 					parameters.Add(parameter.IsDiscrete
-						? UnityAudioParameters.LabeledInt(parameter.Name, Mathf.RoundToInt(parameter.Value))
-						: UnityAudioParameters.LabeledFloat(parameter.Name, parameter.Value));
+						? AudioParam.CustomRef(UnityAudioParamId.LabeledInt, UnityAudioParamId.LabeledInt, parameter.Name,
+							integerValue: Mathf.RoundToInt(parameter.Value))
+						: AudioParam.CustomRef(UnityAudioParamId.LabeledFloat, UnityAudioParamId.LabeledFloat, parameter.Name,
+							float0: parameter.Value));
 				}
 			}
 
@@ -140,10 +142,10 @@ namespace Depra.Sound.FMOD
 
 #if UNITY_EDITOR
 		public static FMODAudioEventDescription Create(EventReference reference,
-			IReadOnlyList<FMODAudioParameterOverride> parameters, bool is3D) => new()
+			IReadOnlyList<FMODAudioParamOverride> parameters, bool is3D) => new()
 		{
 			_clip = new FMODAudioClip(reference),
-			_parameters = new List<FMODAudioParameterOverride>(parameters),
+			_parameters = new List<FMODAudioParamOverride>(parameters),
 			_is3D = is3D
 		};
 #endif
@@ -164,7 +166,7 @@ namespace Depra.Sound.FMOD
 	}
 
 	[Serializable]
-	public sealed class FMODAudioParameterOverride
+	public sealed class FMODAudioParamOverride
 	{
 		public string Name;
 		public float Minimum;
