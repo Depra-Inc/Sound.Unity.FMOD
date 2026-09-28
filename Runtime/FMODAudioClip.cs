@@ -2,19 +2,22 @@
 // © 2024-2025 Depra <n.melnikov@depra.org>
 
 using System;
+using Depra.SerializeReference.Extensions;
 using FMODUnity;
 using UnityEngine;
 
 namespace Depra.Sound.FMOD
 {
 	[Serializable]
+	[SerializeReferenceMenuPath("FMOD Audio Clip")]
 	public struct FMODAudioClip : IAudioClip, IEquatable<FMODAudioClip>
 	{
-		public static implicit operator EventReference(FMODAudioClip clip) => clip._event;
-
 		[SerializeField] private EventReference _event;
 
+		public static implicit operator EventReference(FMODAudioClip clip) => clip._event;
+
 		public FMODAudioClip(EventReference @event) => _event = @event;
+		public EventReference Event => _event;
 
 		public string Name => _event.ToString();
 

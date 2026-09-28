@@ -1,0 +1,22 @@
+{
+  "name": "Depra.Sound.FMOD.Editor",
+  "rootNamespace": "Depra.Sound.FMOD",
+  "references": [
+	  "GUID:816d74bcd7577b44e97c46316f0387a9",
+	  "GUID:cb7677fa5e3ba184b8863b00a0a09e36",
+	  "GUID:4ecd928e5b514c91943318bbb98527e8",
+	  "GUID:0c752da273b17c547ae705acf0f2adf2",
+	  "GUID:aab3caaf43456d6449a3e035348ff798"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

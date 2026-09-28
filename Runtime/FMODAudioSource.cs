@@ -1,5 +1,5 @@
 ﻿// SPDX-License-Identifier: Apache-2.0
-// © 2024-2025 Depra <n.melnikov@depra.org>
+// © 2024-2026 Depra <n.melnikov@depra.org>
 
 using System;
 using System.Diagnostics;
@@ -16,12 +16,13 @@ using STOP_MODE = FMOD.Studio.STOP_MODE;
 
 namespace Depra.Sound.FMOD
 {
-	[AddComponentMenu(MENU_PATH + nameof(FMODAudioSource), DEFAULT_ORDER)]
-	public sealed class FMODAudioSource : SceneAudioSource, IAudioSource<FMODAudioClip>
+	[AddComponentMenu(MENU_PATH + FILE_NAME, DEFAULT_ORDER)]
+	public sealed class FMODAudioSource : SceneAudioSource, IAudioSource
 	{
 		[SerializeField] private STOP_MODE _stopMode;
 		[SerializeField] private bool _autoRelease = true;
 
+		private const string FILE_NAME = "FMOD Audio Source";
 		private static readonly Type SUPPORTED_CLIP = typeof(FMODAudioClip);
 
 		private EventInstance _cachedInstance;
@@ -65,6 +66,32 @@ namespace Depra.Sound.FMOD
 			StartClip(_cachedInstance);
 		}
 
+		public void Play(IAudioClip clip,
+			ReadOnlySpan<AudioParameter> staticParams,
+			ReadOnlySpan<AudioParameter> dynamicParams)
+		{
+			Guard.AgainstUnsupportedType(clip.GetType(), SUPPORTED_CLIP);
+			var fmodClip = (FMODAudioClip)clip;
+			_cachedInstance = RuntimeManager.CreateInstance(fmodClip);
+			if (!_cachedInstance.isValid())
+			{
+				return;
+			}
+
+			foreach (var parameter in staticParams)
+			{
+				SetParameter(parameter);
+			}
+
+			foreach (var parameter in dynamicParams)
+			{
+				SetParameter(parameter);
+			}
+
+			Current = fmodClip;
+			StartClip(_cachedInstance);
+		}
+
 		public void SetParameter(in AudioParameter parameter)
 		{
 			RESULT result;
@@ -97,11 +124,11 @@ namespace Depra.Sound.FMOD
 				RuntimeManager.AttachInstanceToGameObject(_cachedInstance, transformParameter);
 				result = RESULT.OK;
 			}
-			else if (parameterId == Audio3DParameterId.NamedInt)
+			else if (parameterId == Audio3DParameterId.LabeledInt)
 			{
 				result = _cachedInstance.setParameterByName(parameter.ReferenceValue as string, parameter.IntegerValue);
 			}
-			else if (parameterId == Audio3DParameterId.NamedFloat)
+			else if (parameterId == Audio3DParameterId.LabeledFloat)
 			{
 				result = _cachedInstance.setParameterByName(parameter.ReferenceValue as string, parameter.FloatValue);
 			}
@@ -109,6 +136,7 @@ namespace Depra.Sound.FMOD
 			{
 				result = RESULT.ERR_INVALID_PARAM;
 			}
+
 //LabelParameter label => _cachedInstance.setParameterByNameWithLabel(label.Name, label.Value),
 			if (result != RESULT.OK)
 			{
@@ -144,7 +172,7 @@ namespace Depra.Sound.FMOD
 
 			Stopped?.Invoke(reason);
 		}
-		
+
 		private bool IsPlayingInternal()
 		{
 			if (!_cachedInstance.isValid() || _cachedInstance.getPlaybackState(out var state) != RESULT.OK)
