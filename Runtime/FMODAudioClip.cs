@@ -10,15 +10,15 @@ namespace Depra.Sound.FMOD
 {
 	[Serializable]
 	[SerializeReferenceMenuPath("FMOD Audio Clip")]
-	public struct FMODAudioClip : IAudioClip, IEquatable<FMODAudioClip>
+	public sealed class FMODAudioClip : IAudioClip, IEquatable<FMODAudioClip>
 	{
 		[SerializeField] private EventReference _event;
 
 		public static implicit operator EventReference(FMODAudioClip clip) => clip._event;
 
 		public FMODAudioClip(EventReference @event) => _event = @event;
-		public EventReference Event => _event;
 
+		public EventReference Event => _event;
 		public string Name => _event.ToString();
 
 		public float Duration
