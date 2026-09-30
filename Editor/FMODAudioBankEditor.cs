@@ -8,6 +8,8 @@ namespace Depra.Sound.FMOD.Editor
 	[CustomEditor(typeof(FMODAudioBank))]
 	internal sealed class FMODAudioBankEditor : UnityEditor.Editor, IAudioBankEmbeddedEditor
 	{
+		private const float ACTION_BUTTON_WIDTH = 82f;
+
 		private ReorderableList _events;
 		private ReorderableList _containers;
 		private AudioProjectSettings _settings;
@@ -65,10 +67,14 @@ namespace Depra.Sound.FMOD.Editor
 
 		private void DrawEventList()
 		{
+			if (_events != null && _events.serializedProperty.serializedObject.targetObject == serializedObject.targetObject)
+			{
+				return;
+			}
+
 			var entries = serializedObject.FindProperty("_events");
 			_events = new ReorderableList(serializedObject, entries, false, true, false, true)
 			{
-				index = entries.arraySize > 0 ? 0 : -1,
 				elementHeightCallback = index =>
 					index >= entries.arraySize
 						? EditorGUIUtility.singleLineHeight
@@ -88,10 +94,14 @@ namespace Depra.Sound.FMOD.Editor
 
 		private void DrawContainerList()
 		{
+			if (_containers != null && _containers.serializedProperty.serializedObject.targetObject == serializedObject.targetObject)
+			{
+				return;
+			}
+
 			var entries = serializedObject.FindProperty("_containers");
 			_containers = new ReorderableList(serializedObject, entries, true, true, true, true)
 			{
-				index = entries.arraySize > 0 ? 0 : -1,
 				elementHeightCallback = index => index >= entries.arraySize
 					? EditorGUIUtility.singleLineHeight
 					: GetContainerHeight(entries.GetArrayElementAtIndex(index)),
@@ -173,7 +183,7 @@ namespace Depra.Sound.FMOD.Editor
 			return line + 2f + line + 2f + line + 8f;
 		}
 
-		private static void DrawEventRow(Rect rect, SerializedProperty entries, int index)
+		private void DrawEventRow(Rect rect, SerializedProperty entries, int index)
 		{
 			if (index >= entries.arraySize)
 			{
@@ -181,13 +191,24 @@ namespace Depra.Sound.FMOD.Editor
 			}
 
 			var entry = entries.GetArrayElementAtIndex(index);
-			var name = entry.FindPropertyRelative(nameof(FMODAudioBank.EventEntry.Name));
+			var eventName = entry.FindPropertyRelative(nameof(FMODAudioBank.EventEntry.Name));
 			var id = entry.FindPropertyRelative(nameof(FMODAudioBank.EventEntry.Id));
-			var header = new Rect(rect.x, rect.y + 2f, rect.width, EditorGUIUtility.singleLineHeight);
+			var header = new Rect(rect.x, rect.y + 2f, rect.width - ACTION_BUTTON_WIDTH - 4f,
+				EditorGUIUtility.singleLineHeight);
 			var idValue = id.FindPropertyRelative("Value");
+
 			entry.isExpanded = EditorGUI.Foldout(header, entry.isExpanded,
-				$"{(string.IsNullOrWhiteSpace(name.stringValue) ? $"Event {index + 1}" : name.stringValue)}   (ID {idValue.ulongValue})",
+				$"{(string.IsNullOrWhiteSpace(eventName.stringValue) ? $"Event {index + 1}" : eventName.stringValue)}   (ID {idValue.ulongValue})",
 				true);
+
+			var duplicateRect = new Rect(rect.xMax - ACTION_BUTTON_WIDTH, rect.y + 2f, ACTION_BUTTON_WIDTH,
+				EditorGUIUtility.singleLineHeight);
+			if (GUI.Button(duplicateRect, "Duplicate"))
+			{
+				DuplicateEvent(entries, index);
+				return;
+			}
+
 			if (!entry.isExpanded)
 			{
 				return;
@@ -197,7 +218,7 @@ namespace Depra.Sound.FMOD.Editor
 			var indent = rect.x + 14f;
 			var width = rect.width - 14f;
 			var nameRect = new Rect(indent, y, width, EditorGUIUtility.singleLineHeight);
-			EditorGUI.PropertyField(nameRect, name);
+			EditorGUI.PropertyField(nameRect, eventName);
 			var description = entry.FindPropertyRelative(nameof(FMODAudioBank.EventEntry.Description));
 
 			y = nameRect.yMax + 2f;
@@ -215,6 +236,32 @@ namespace Depra.Sound.FMOD.Editor
 			y = y + eventHeight + 2f;
 			EditorGUI.PropertyField(new Rect(indent, y, width, EditorGUI.GetPropertyHeight(parameters, true)),
 				parameters, new GUIContent("Static Parameters"), true);
+		}
+
+		private void DuplicateEvent(SerializedProperty entries, int index)
+		{
+			if (!TryGetSettings("Cannot duplicate event without project Audio Table."))
+			{
+				return;
+			}
+
+			var source = entries.GetArrayElementAtIndex(index);
+			var insertIndex = index + 1;
+			entries.InsertArrayElementAtIndex(insertIndex);
+			var duplicated = entries.GetArrayElementAtIndex(insertIndex);
+
+			var sourceName = source.FindPropertyRelative(nameof(FMODAudioBank.EventEntry.Name)).stringValue;
+			duplicated.FindPropertyRelative(nameof(FMODAudioBank.EventEntry.Name)).stringValue =
+				string.IsNullOrWhiteSpace(sourceName) ? $"Event {insertIndex + 1}" : $"{sourceName} Copy";
+
+			Undo.RecordObject(_settings, "Allocate FMOD alias event ID");
+			var newId = _settings.AllocateEventId();
+			EditorUtility.SetDirty(_settings);
+			SetId(duplicated.FindPropertyRelative(nameof(FMODAudioBank.EventEntry.Id)), newId);
+
+			serializedObject.ApplyModifiedProperties();
+			serializedObject.Update();
+			_events.index = insertIndex;
 		}
 
 		private static void DrawContainerRow(Rect rect, SerializedProperty entries, int index)

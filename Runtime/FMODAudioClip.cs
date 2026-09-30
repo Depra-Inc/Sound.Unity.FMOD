@@ -1,5 +1,5 @@
 ﻿// SPDX-License-Identifier: Apache-2.0
-// © 2024-2025 Depra <n.melnikov@depra.org>
+// © 2024-2026 Depra <n.melnikov@depra.org>
 
 using System;
 using Depra.SerializeReference.Extensions;
@@ -31,9 +31,9 @@ namespace Depra.Sound.FMOD
 		}
 
 		public override string ToString() => Name;
-		public override int GetHashCode() => _event.Guid.GetHashCode();
+		public override int GetHashCode() => Event.Guid.GetHashCode();
 
-		public bool Equals(FMODAudioClip other) => _event.Guid == other._event.Guid;
+		public bool Equals(FMODAudioClip other) => Event.Guid == other?.Event.Guid;
 		public override bool Equals(object obj) => obj is FMODAudioClip other && Equals(other);
 	}
 }

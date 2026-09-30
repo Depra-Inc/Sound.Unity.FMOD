@@ -11,7 +11,6 @@ namespace Depra.Sound.FMOD
 	{
 		[SerializeField] private List<EventEntry> _events;
 		[SerializeField] private List<AudioContainerEntry> _containers;
-		[SerializeField] private string _sourceBankPath;
 		[SerializeField] private FMODBankMetadata _metadata;
 
 		public override string IconPath => $"Assets/Plugins/FMOD/images/StudioIcon.png";
@@ -47,20 +46,19 @@ namespace Depra.Sound.FMOD
 			}
 
 			var events = _events ??= new List<EventEntry>();
-			var previousEvents = new List<EventEntry>(events);
 			var reservedIds = new HashSet<ulong>();
+			var previousEvents = new List<EventEntry>(events);
 			foreach (var entry in previousEvents)
 			{
 				reservedIds.Add(entry.Id.Value);
 			}
 
-			_metadata = metadata;
-			if (_sourceBankPath != metadata.BankPath)
+			if (_metadata.BankPath != metadata.BankPath)
 			{
-				_sourceBankPath = metadata.BankPath;
 				events.Clear();
 			}
 
+			_metadata = metadata;
 			foreach (var imported in importedEvents)
 			{
 				if (imported.Description == null)
@@ -68,11 +66,11 @@ namespace Depra.Sound.FMOD
 					continue;
 				}
 
-				var description = imported.Description;
-				var existingIndex = FindEvent(description.Event.Guid);
 				var entry = imported;
-				var existing = existingIndex >= 0
-					? events[existingIndex]
+				var description = entry.Description;
+				var existingIndexes = FindEvents(events, description.Event.Guid);
+				var existing = existingIndexes.Count > 0
+					? events[existingIndexes[0]]
 					: FindEvent(previousEvents, description.Event.Guid);
 
 				if (existing.Description != null && settings.ContainsEventId(existing.Id.Value, this))
@@ -82,15 +80,26 @@ namespace Depra.Sound.FMOD
 
 				if (existing.Description != null)
 				{
-					description.PreserveOverrides(existing.Description);
-					entry.Id = existing.Id;
-					if (existingIndex >= 0)
+					if (existingIndexes.Count == 0)
 					{
-						events[existingIndex] = entry;
-					}
-					else
-					{
+						description.PreserveOverrides(existing.Description);
+						entry.Id = existing.Id;
 						events.Add(entry);
+						continue;
+					}
+
+					foreach (var existingIndex in existingIndexes)
+					{
+						var existingEntry = events[existingIndex];
+						var clonedDescription = description.Clone();
+						clonedDescription.PreserveOverrides(existingEntry.Description);
+						existingEntry.Description = clonedDescription;
+						if (string.IsNullOrWhiteSpace(existingEntry.Name))
+						{
+							existingEntry.Name = entry.Name;
+						}
+
+						events[existingIndex] = existingEntry;
 					}
 				}
 				else
@@ -103,20 +112,21 @@ namespace Depra.Sound.FMOD
 		}
 
 		private static EventEntry FindEvent(IReadOnlyList<EventEntry> events, GUID guid) =>
-			events.FirstOrDefault(entry => entry.Description.Event.Guid.Equals(guid));
+			events.FirstOrDefault(entry => entry.Description != null && entry.Description.Event.Guid.Equals(guid));
 
-		private int FindEvent(GUID guid)
+		private static List<int> FindEvents(IReadOnlyList<EventEntry> events, GUID guid)
 		{
-			for (var index = 0; index < _events.Count; index++)
+			var indexes = new List<int>();
+			for (var index = 0; index < events.Count; index++)
 			{
-				var description = _events[index].Description;
+				var description = events[index].Description;
 				if (description != null && description.Event.Guid.Equals(guid))
 				{
-					return index;
+					indexes.Add(index);
 				}
 			}
 
-			return -1;
+			return indexes;
 		}
 #endif
 		[Serializable]
@@ -126,25 +136,5 @@ namespace Depra.Sound.FMOD
 			public AudioEventId Id;
 			public FMODAudioEventDescription Description;
 		}
-	}
-
-	[Serializable]
-	public sealed class FMODAudioParamOverride
-	{
-		public string Name;
-		public float Minimum;
-		public float Maximum;
-		public float DefaultValue;
-		public float Value;
-		public bool IsDiscrete;
-		public bool IsSupported = true;
-		public bool Enabled;
-	}
-
-	[Serializable]
-	internal struct FMODBankMetadata
-	{
-		public string BankPath;
-		public long TotalSize;
 	}
 }

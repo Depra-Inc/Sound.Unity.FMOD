@@ -265,10 +265,11 @@ namespace Depra.Sound.FMOD.Editor
 			var eventReference = new EventReference { Guid = eventRef.Guid, Path = eventRef.Path };
 			var parameters = eventRef.LocalParameters.Select(CreateParameter).ToList();
 			var eventDescription = FMODAudioEventDescription.Create(eventReference, parameters, eventRef.Is3D);
+			var displayName = Path.GetFileName(eventRef.Path) ?? eventRef.Path;
 			return new FMODAudioBank.EventEntry
 			{
 				Id = eventId,
-				Name = Path.GetFileName(eventRef.Path) ?? eventRef.Path,
+				Name = displayName,
 				Description = eventDescription
 			};
 		}

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Depra.SerializeReference.Extensions;
 using Depra.Sound.Runtime;
 using FMODUnity;
@@ -49,6 +50,25 @@ namespace Depra.Sound.FMOD
 			_clip = new FMODAudioClip(reference),
 			_parameters = new List<FMODAudioParamOverride>(parameters),
 			_is3D = is3D
+		};
+
+		internal FMODAudioEventDescription Clone() => new()
+		{
+			_clip = _clip == null ? null : new FMODAudioClip(_clip.Event),
+			_parameters = _parameters?.Select(CloneParameter).ToList() ?? new List<FMODAudioParamOverride>(),
+			_is3D = _is3D
+		};
+
+		private static FMODAudioParamOverride CloneParameter(FMODAudioParamOverride parameter) => new()
+		{
+			Name = parameter.Name,
+			Minimum = parameter.Minimum,
+			Maximum = parameter.Maximum,
+			DefaultValue = parameter.DefaultValue,
+			Value = parameter.Value,
+			IsDiscrete = parameter.IsDiscrete,
+			IsSupported = parameter.IsSupported,
+			Enabled = parameter.Enabled
 		};
 #endif
 
