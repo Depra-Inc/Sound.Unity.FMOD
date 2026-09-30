@@ -188,7 +188,9 @@ namespace Depra.Sound.FMOD.Editor
 			Undo.RecordObject(_target, "Import FMOD events");
 
 			var bankKey = string.IsNullOrEmpty(bank.StudioPath) ? bank.Path : bank.StudioPath;
-			_target.Import(bankKey, imports, table);
+			var totalSize = bank.FileSizes.Sum(sizeInfo => sizeInfo.Value);
+			var metadata = new FMODBankMetadata { BankPath = bankKey, TotalSize = totalSize };
+			_target.Import(metadata, imports, table);
 			EditorUtility.SetDirty(_target);
 			if (!table.Banks.Contains(_target))
 			{
@@ -222,8 +224,10 @@ namespace Depra.Sound.FMOD.Editor
 					return;
 				}
 
+				var totalSize = bank.FileSizes.Sum(sizeInfo => sizeInfo.Value);
+				var metadata = new FMODBankMetadata { BankPath = bankKey, TotalSize = totalSize };
 				var imports = EventsInBank(bank).Select(editorEvent => ImportEvent(editorEvent, table));
-				_target.Import(bankKey, imports, table);
+				_target.Import(metadata, imports, table);
 				EditorUtility.SetDirty(_target);
 				if (!table.Banks.Contains(_target))
 				{

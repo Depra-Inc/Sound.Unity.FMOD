@@ -12,6 +12,7 @@ namespace Depra.Sound.FMOD
 		[SerializeField] private List<EventEntry> _events;
 		[SerializeField] private List<AudioContainerEntry> _containers;
 		[SerializeField] private string _sourceBankPath;
+		[SerializeField] private FMODBankMetadata _metadata;
 
 		public override string IconPath => $"Assets/Plugins/FMOD/images/StudioIcon.png";
 
@@ -37,7 +38,7 @@ namespace Depra.Sound.FMOD
 			select (entry.Id.Value, $"{eventName} ({entry.Id.Value}) - {eventName}");
 
 #if UNITY_EDITOR
-		internal void Import(string bankPath, IEnumerable<EventEntry> importedEvents,
+		internal void Import(FMODBankMetadata metadata, IEnumerable<EventEntry> importedEvents,
 			AudioProjectSettings settings)
 		{
 			if (!settings)
@@ -53,9 +54,10 @@ namespace Depra.Sound.FMOD
 				reservedIds.Add(entry.Id.Value);
 			}
 
-			if (_sourceBankPath != bankPath)
+			_metadata = metadata;
+			if (_sourceBankPath != metadata.BankPath)
 			{
-				_sourceBankPath = bankPath;
+				_sourceBankPath = metadata.BankPath;
 				events.Clear();
 			}
 
@@ -137,5 +139,12 @@ namespace Depra.Sound.FMOD
 		public bool IsDiscrete;
 		public bool IsSupported = true;
 		public bool Enabled;
+	}
+
+	[Serializable]
+	internal struct FMODBankMetadata
+	{
+		public string BankPath;
+		public long TotalSize;
 	}
 }

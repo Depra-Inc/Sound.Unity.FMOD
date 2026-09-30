@@ -20,7 +20,7 @@ namespace Depra.Sound.FMOD.Editor
 			serializedObject.Update();
 
 			DrawImportToolbar();
-			DrawSourceBankPath();
+			DrawBankMetadata();
 			DrawEventList();
 			DrawContainerList();
 
@@ -46,13 +46,17 @@ namespace Depra.Sound.FMOD.Editor
 			}
 		}
 
-		private void DrawSourceBankPath()
+		private void DrawBankMetadata()
 		{
-			var sourcePath = serializedObject.FindProperty("_sourceBankPath");
+			var sourcePath = serializedObject.FindProperty("_metadata");
 			using (new EditorGUI.DisabledScope(true))
 			{
 				EditorGUILayout.BeginHorizontal();
-				EditorGUILayout.PropertyField(sourcePath, new GUIContent("Source Bank Path", EditorIcons.STUDIO));
+				EditorGUILayout.PropertyField(sourcePath.FindPropertyRelative("BankPath"), new GUIContent("Source Bank Path", EditorIcons.STUDIO));
+				var sizeProperty = sourcePath.FindPropertyRelative("TotalSize");
+				var sizeValue = sizeProperty.longValue;
+				var formattedSize = FormatSize(sizeValue);
+				EditorGUILayout.LabelField($"File Size: {formattedSize}", GUILayout.Width(150f));
 				EditorGUILayout.EndHorizontal();
 			}
 
@@ -257,5 +261,20 @@ namespace Depra.Sound.FMOD.Editor
 
 		private static void SetId(SerializedProperty id, ulong value) =>
 			id.FindPropertyRelative("Value").ulongValue = value;
+		
+		private static readonly string[] SIZE_SUFFIX = { "B", "KB", "MB", "GB" };
+
+		private static string FormatSize(long bytes)
+		{
+			var order = 0;
+			double size = bytes;
+			while (size >= 1024 && order + 1 < SIZE_SUFFIX.Length)
+			{
+				order++;
+				size /= 1024;
+			}
+
+			return $"{size:0.##} {SIZE_SUFFIX[order]}";
+		}
 	}
 }
