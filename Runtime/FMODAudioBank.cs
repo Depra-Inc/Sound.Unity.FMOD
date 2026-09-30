@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Depra.Sound.Configuration;
 using FMOD;
 using UnityEngine;
 
@@ -14,9 +13,11 @@ namespace Depra.Sound.FMOD
 		[SerializeField] private List<AudioContainerEntry> _containers;
 		[SerializeField] private string _sourceBankPath;
 
+		public override string IconPath => $"Assets/Plugins/FMOD/images/StudioIcon.png";
+
 		public override bool Contains(AudioEventId id) =>
-			_events.Any(entry => entry.Id == id) ||
-			_containers.Any(entry => entry.Id == id);
+			(_events != null && _events.Any(entry => entry.Id == id)) ||
+			(_containers != null && _containers.Any(entry => entry.Id == id));
 
 		public override void Compile(IDictionary<AudioEventId, IAudioEventDescription> map)
 		{
@@ -35,10 +36,8 @@ namespace Depra.Sound.FMOD
 			let eventName = string.IsNullOrWhiteSpace(entry.Name) ? "Unnamed Event" : entry.Name
 			select (entry.Id.Value, $"{eventName} ({entry.Id.Value}) - {eventName}");
 
-		public string SourceBankPath => _sourceBankPath;
-
 #if UNITY_EDITOR
-		internal void Import(string bankPath, IReadOnlyList<EventEntry> importedEvents,
+		internal void Import(string bankPath, IEnumerable<EventEntry> importedEvents,
 			AudioProjectSettings settings)
 		{
 			if (!settings)

@@ -1,5 +1,4 @@
-using Depra.Sound.Configuration;
-using Depra.Sound.Editor;
+using Depra.Sound.Unity.Editor;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -35,10 +34,14 @@ namespace Depra.Sound.FMOD.Editor
 		{
 			using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
 			{
+				EditorGUILayout.LabelField("This bank is generated from FMOD Bank. Reimport the bank to update events and containers.",
+					EditorStyles.helpBox, GUILayout.MaxWidth(800f), GUILayout.Height(16f));
+
 				GUILayout.FlexibleSpace();
-				if (GUILayout.Button("Import FMOD Events", EditorStyles.toolbarButton, GUILayout.Width(140f)))
+				var importButtonContent = new GUIContent(" Import FMOD Events", EditorIcons.IMPORT, "Import events from FMOD Studio");
+				if (GUILayout.Button(importButtonContent, EditorStyles.toolbarButton, GUILayout.Width(160f)))
 				{
-					EditorApplication.ExecuteMenuItem(FMODAudioBankImportWindow.MENU_PATH);
+					FMODAudioBankImportWindow.Open(target as FMODAudioBank);
 				}
 			}
 		}
@@ -48,7 +51,9 @@ namespace Depra.Sound.FMOD.Editor
 			var sourcePath = serializedObject.FindProperty("_sourceBankPath");
 			using (new EditorGUI.DisabledScope(true))
 			{
-				EditorGUILayout.PropertyField(sourcePath, new GUIContent("Source Bank Path"));
+				EditorGUILayout.BeginHorizontal();
+				EditorGUILayout.PropertyField(sourcePath, new GUIContent("Source Bank Path", EditorIcons.STUDIO));
+				EditorGUILayout.EndHorizontal();
 			}
 
 			EditorGUILayout.Space(4f);
@@ -141,9 +146,15 @@ namespace Depra.Sound.FMOD.Editor
 
 			var description = entry.FindPropertyRelative(nameof(FMODAudioBank.EventEntry.Description));
 			var clip = description.FindPropertyRelative("_clip")?.FindPropertyRelative("_event");
+			if (clip?.boxedValue == null)
+			{
+				return line + 6f;
+			}
+
 			var parameters = description.FindPropertyRelative("_parameters");
 			var eventHeight = EditorGUI.GetPropertyHeight(clip, new GUIContent("Event"));
 			var parametersHeight = EditorGUI.GetPropertyHeight(parameters, new GUIContent("Static Parameters"), true);
+
 			return line + 2f + line + 2f + eventHeight + 2 + parametersHeight + 8f;
 		}
 
@@ -187,6 +198,11 @@ namespace Depra.Sound.FMOD.Editor
 
 			y = nameRect.yMax + 2f;
 			var clip = description.FindPropertyRelative("_clip")?.FindPropertyRelative("_event");
+			if (clip?.boxedValue == null)
+			{
+				return;
+			}
+
 			var eventContent = new GUIContent("Event");
 			var eventHeight = EditorGUI.GetPropertyHeight(clip, eventContent, true);
 			EditorGUI.PropertyField(new Rect(indent, y, width, eventHeight), clip, eventContent);

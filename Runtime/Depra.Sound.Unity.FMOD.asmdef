@@ -1,6 +1,6 @@
 {
-    "name": "Depra.Sound.FMOD",
-    "rootNamespace": "Depra.Sound.FMOD",
+    "name": "Depra.Sound.Unity.FMOD",
+    "rootNamespace": "Depra.Sound.Unity.FMOD",
     "references": [
         "GUID:816d74bcd7577b44e97c46316f0387a9",
         "GUID:d4770dd4eaf4dc9469ce95e304152de6",

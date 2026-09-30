@@ -1,4 +1,4 @@
-using Depra.Sound.Editor;
+using Depra.Sound.Unity.Editor;
 using JetBrains.Annotations;
 
 namespace Depra.Sound.FMOD.Editor

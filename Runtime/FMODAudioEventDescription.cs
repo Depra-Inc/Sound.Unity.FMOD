@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Depra.SerializeReference.Extensions;
-using Depra.Sound.Configuration;
 using Depra.Sound.Runtime;
 using FMODUnity;
 using UnityEngine;

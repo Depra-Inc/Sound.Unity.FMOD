@@ -6,17 +6,6 @@ namespace Depra.Sound.FMOD.Editor
 	[CustomPropertyDrawer(typeof(FMODAudioEventDescription))]
 	public sealed class FMODAudioEventDescriptionDrawer : PropertyDrawer
 	{
-		public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
-		{
-			if (!property.isExpanded)
-			{
-				return EditorGUIUtility.singleLineHeight;
-			}
-
-			var parameters = property.FindPropertyRelative("_parameters");
-			return EditorGUIUtility.singleLineHeight * 4f + EditorGUI.GetPropertyHeight(parameters, true) + 10f;
-		}
-
 		public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
 		{
 			EditorGUI.BeginProperty(position, label, property);
@@ -53,6 +42,17 @@ namespace Depra.Sound.FMOD.Editor
 			}
 
 			EditorGUI.EndProperty();
+		}
+
+		public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+		{
+			if (!property.isExpanded)
+			{
+				return EditorGUIUtility.singleLineHeight;
+			}
+
+			var parameters = property.FindPropertyRelative("_parameters");
+			return EditorGUIUtility.singleLineHeight * 4f + EditorGUI.GetPropertyHeight(parameters, true) + 10f;
 		}
 	}
 }

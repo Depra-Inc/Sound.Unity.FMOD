@@ -4,8 +4,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Depra.Sound.Configuration;
-using Depra.Sound.Exceptions;
+using Depra.Sound;
 using FMOD;
 using FMOD.Studio;
 using FMODUnity;
