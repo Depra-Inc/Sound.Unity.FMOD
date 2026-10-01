@@ -12,6 +12,8 @@ namespace Depra.Sound.FMOD.Editor
 	internal sealed class FMODAudioBankImportWindow : EditorWindow
 	{
 		public const string MENU_PATH = "Depra/Sound/Import FMOD Bank";
+		private const string ALL_EVENTS_OPTION = "<All Events>";
+		private const string ALL_EVENTS_METADATA_LABEL = "All FMOD Events";
 
 		[MenuItem(MENU_PATH)]
 		private static void Open() => Open(null);
@@ -27,7 +29,7 @@ namespace Depra.Sound.FMOD.Editor
 		private List<EditorBankRef> _banks;
 		private List<EditorEventRef> _events;
 		private readonly HashSet<string> _selection = new();
-		private int _bankIndex;
+		private int _bankIndex = -1;
 		private string _search = string.Empty;
 		private Vector2 _scroll;
 
@@ -45,9 +47,10 @@ namespace Depra.Sound.FMOD.Editor
 				}
 			}
 
-			if (_banks == null || _banks.Count == 0)
+			var hasEvents = _events != null && _events.Count > 0;
+			if (!hasEvents)
 			{
-				EditorGUILayout.HelpBox("No FMOD banks found. Refresh the FMOD bank cache and try again.",
+				EditorGUILayout.HelpBox("No FMOD events found. Refresh the FMOD bank cache and try again.",
 					MessageType.Warning);
 				if (GUILayout.Button("Refresh"))
 				{
@@ -57,16 +60,21 @@ namespace Depra.Sound.FMOD.Editor
 				return;
 			}
 
-			_bankIndex = Mathf.Clamp(_bankIndex, 0, _banks.Count - 1);
-			var displayedOptions = _banks
-				.Select(bank => string.IsNullOrEmpty(bank.StudioPath) ? bank.Name : bank.StudioPath).ToArray();
-			var selectedBank = EditorGUILayout.Popup("FMOD Bank", _bankIndex, displayedOptions);
-			if (selectedBank != _bankIndex)
+			var displayedOptions = new List<string> { ALL_EVENTS_OPTION };
+			if (_banks != null)
+			{
+				displayedOptions.AddRange(_banks
+					.Select(bank => string.IsNullOrEmpty(bank.StudioPath) ? bank.Name : bank.StudioPath));
+			}
+
+			var popupIndex = Mathf.Clamp(_bankIndex + 1, 0, displayedOptions.Count - 1);
+			var selectedPopupIndex = EditorGUILayout.Popup("FMOD Bank", popupIndex, displayedOptions.ToArray());
+			if (selectedPopupIndex != popupIndex)
 			{
 				_selection.Clear();
 			}
 
-			_bankIndex = selectedBank;
+			_bankIndex = selectedPopupIndex - 1;
 			EditorGUILayout.LabelField($"{FilteredEvents().Count} events  |  {_selection.Count} selected",
 				EditorStyles.miniLabel);
 			_search = EditorGUILayout.TextField(_search, EditorStyles.toolbarSearchField);
@@ -94,6 +102,8 @@ namespace Depra.Sound.FMOD.Editor
 					ImportAllBanks();
 				}
 			}
+
+			DrawCacheDiagnostics();
 
 			_scroll = EditorGUILayout.BeginScrollView(_scroll);
 			foreach (var eventRef in FilteredEvents())
@@ -136,6 +146,19 @@ namespace Depra.Sound.FMOD.Editor
 			LoadCache();
 		}
 
+		private void HardRefresh()
+		{
+			var cacheAssetPath = EventManager.CacheAssetFullName;
+			if (!string.IsNullOrEmpty(cacheAssetPath))
+			{
+				AssetDatabase.DeleteAsset(cacheAssetPath);
+			}
+
+			AssetDatabase.Refresh();
+			EventManager.RefreshBanks();
+			LoadCache();
+		}
+
 		private void LoadCache()
 		{
 			_banks = EventManager.Banks ?? new List<EditorBankRef>();
@@ -143,13 +166,103 @@ namespace Depra.Sound.FMOD.Editor
 			_selection.Clear();
 		}
 
-		private List<EditorEventRef> FilteredEvents() => EventsInSelectedBank().Where(eventRef =>
+		private void DrawCacheDiagnostics()
+		{
+			var missingBanks = GetMissingBanksInCache();
+			if (missingBanks.Count == 0)
+			{
+				return;
+			}
+
+			var preview = string.Join(", ", missingBanks.Take(6));
+			if (missingBanks.Count > 6)
+			{
+				preview += ", ...";
+			}
+
+			EditorGUILayout.HelpBox(
+				$"FMOD cache may be stale. Not in EventManager cache: {preview}",
+				MessageType.Warning);
+
+			if (GUILayout.Button("Rebuild FMOD Cache", EditorStyles.miniButton))
+			{
+				HardRefresh();
+			}
+		}
+
+		private List<string> GetMissingBanksInCache()
+		{
+			try
+			{
+				var sourceBankPath = Settings.Instance?.SourceBankPath;
+				if (string.IsNullOrEmpty(sourceBankPath) || !Directory.Exists(sourceBankPath))
+				{
+					return new List<string>();
+				}
+
+				var diskBanks = Directory
+					.GetFiles(sourceBankPath, "*.bank", SearchOption.AllDirectories)
+					.Where(path => !path.EndsWith(".strings.bank", StringComparison.OrdinalIgnoreCase))
+					.Select(Path.GetFileNameWithoutExtension)
+					.Where(bankName => !string.IsNullOrEmpty(bankName))
+					.Distinct(StringComparer.OrdinalIgnoreCase)
+					.ToList();
+
+				if (diskBanks.Count == 0)
+				{
+					return new List<string>();
+				}
+
+				var cacheBanks = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+				if (_banks != null)
+				{
+					foreach (var bank in _banks)
+					{
+						if (bank == null)
+						{
+							continue;
+						}
+
+						if (!string.IsNullOrEmpty(bank.Name))
+						{
+							cacheBanks.Add(Path.GetFileNameWithoutExtension(bank.Name));
+						}
+
+						if (!string.IsNullOrEmpty(bank.Path))
+						{
+							cacheBanks.Add(Path.GetFileNameWithoutExtension(bank.Path));
+						}
+					}
+				}
+
+				return diskBanks
+					.Where(bankName => !cacheBanks.Contains(bankName))
+					.OrderBy(bankName => bankName)
+					.ToList();
+			}
+			catch
+			{
+				return new List<string>();
+			}
+		}
+
+		private List<EditorEventRef> FilteredEvents() => EventsInScope().Where(eventRef =>
 			(string.IsNullOrEmpty(_search) || !string.IsNullOrEmpty(eventRef.Path) && eventRef.Path.IndexOf(_search,
 				StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
 
-		private IEnumerable<EditorEventRef> EventsInSelectedBank()
+		private IEnumerable<EditorEventRef> EventsInScope()
 		{
-			if (_banks == null || _events == null || _banks.Count == 0)
+			if (_events == null || _events.Count == 0)
+			{
+				return Enumerable.Empty<EditorEventRef>();
+			}
+
+			if (_bankIndex < 0)
+			{
+				return _events;
+			}
+
+			if (_banks == null || _banks.Count == 0)
 			{
 				return Enumerable.Empty<EditorEventRef>();
 			}
@@ -179,17 +292,26 @@ namespace Depra.Sound.FMOD.Editor
 				return;
 			}
 
-			var bank = _banks[_bankIndex];
-			var imports = from eventRef in EventsInSelectedBank()
+			var imports = from eventRef in EventsInScope()
 				where _selection.Contains(eventRef.Guid.ToString())
 				select CreateImportedEvent(eventRef, table);
 
 			Undo.RecordObject(table, "Allocate FMOD event IDs");
 			Undo.RecordObject(_target, "Import FMOD events");
 
-			var bankKey = string.IsNullOrEmpty(bank.StudioPath) ? bank.Path : bank.StudioPath;
-			var totalSize = bank.FileSizes.Sum(sizeInfo => sizeInfo.Value);
-			var metadata = new FMODBankMetadata { BankPath = bankKey, TotalSize = totalSize };
+			FMODBankMetadata metadata;
+			if (_bankIndex < 0)
+			{
+				metadata = new FMODBankMetadata { BankPath = ALL_EVENTS_METADATA_LABEL, TotalSize = 0L };
+			}
+			else
+			{
+				var bank = _banks[Mathf.Clamp(_bankIndex, 0, _banks.Count - 1)];
+				var bankKey = string.IsNullOrEmpty(bank.StudioPath) ? bank.Path : bank.StudioPath;
+				var totalSize = bank.FileSizes.Sum(sizeInfo => sizeInfo.Value);
+				metadata = new FMODBankMetadata { BankPath = bankKey, TotalSize = totalSize };
+			}
+
 			_target.Import(metadata, imports, table);
 			EditorUtility.SetDirty(_target);
 			if (!table.Banks.Contains(_target))
@@ -259,7 +381,8 @@ namespace Depra.Sound.FMOD.Editor
 			return true;
 		}
 
-		internal static FMODAudioBank.EventEntry CreateImportedEvent(EditorEventRef eventRef, AudioProjectSettings table)
+		internal static FMODAudioBank.EventEntry CreateImportedEvent(EditorEventRef eventRef,
+			AudioProjectSettings table)
 		{
 			var eventId = table.AllocateEventId();
 			var eventReference = new EventReference { Guid = eventRef.Guid, Path = eventRef.Path };

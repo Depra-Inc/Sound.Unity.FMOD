@@ -18,7 +18,16 @@ namespace Depra.Sound.FMOD.Editor
 		private ReorderableList _events;
 		private ReorderableList _containers;
 		private AudioProjectSettings _settings;
+		private GUIContent _importButtonContent;
+		private GUIContent _sourceBankPathContent;
 		private string _eventSearch = string.Empty;
+
+		private void OnEnable()
+		{
+			_sourceBankPathContent = new GUIContent("Source Bank Path", EditorIcons.STUDIO);
+			_importButtonContent = new GUIContent(" Import FMOD Events", EditorIcons.IMPORT,
+				"Import events from FMOD Studio");
+		}
 
 		public override void OnInspectorGUI() => DrawEmbedded(AudioProjectSettingsProvider.LoadTable(), string.Empty);
 
@@ -48,9 +57,7 @@ namespace Depra.Sound.FMOD.Editor
 					EditorStyles.helpBox, GUILayout.MaxWidth(800f), GUILayout.Height(16f));
 
 				GUILayout.FlexibleSpace();
-				var importButtonContent = new GUIContent(" Import FMOD Events", EditorIcons.IMPORT,
-					"Import events from FMOD Studio");
-				if (GUILayout.Button(importButtonContent, EditorStyles.toolbarButton, GUILayout.Width(160f)))
+				if (GUILayout.Button(_importButtonContent, EditorStyles.toolbarButton, GUILayout.Width(160f)))
 				{
 					FMODAudioBankImportWindow.Open(target as FMODAudioBank);
 				}
@@ -63,8 +70,7 @@ namespace Depra.Sound.FMOD.Editor
 			using (new EditorGUI.DisabledScope(true))
 			{
 				EditorGUILayout.BeginHorizontal();
-				EditorGUILayout.PropertyField(sourcePath.FindPropertyRelative("BankPath"),
-					new GUIContent("Source Bank Path", EditorIcons.STUDIO));
+				EditorGUILayout.PropertyField(sourcePath.FindPropertyRelative("BankPath"), _sourceBankPathContent);
 				var sizeProperty = sourcePath.FindPropertyRelative("TotalSize");
 				var sizeValue = sizeProperty.longValue;
 				var formattedSize = FormatSize(sizeValue);
@@ -77,8 +83,7 @@ namespace Depra.Sound.FMOD.Editor
 
 		private void DrawEventList()
 		{
-			if (_events != null && _events.serializedProperty.serializedObject.targetObject ==
-			    serializedObject.targetObject)
+			if (_events != null && _events.serializedProperty.serializedObject.targetObject == serializedObject.targetObject)
 			{
 				return;
 			}
@@ -119,8 +124,7 @@ namespace Depra.Sound.FMOD.Editor
 
 		private void DrawContainerList()
 		{
-			if (_containers != null && _containers.serializedProperty.serializedObject.targetObject ==
-			    serializedObject.targetObject)
+			if (_containers != null && _containers.serializedProperty.serializedObject.targetObject == serializedObject.targetObject)
 			{
 				return;
 			}
@@ -355,7 +359,8 @@ namespace Depra.Sound.FMOD.Editor
 			var metadata = ReadBankMetadata();
 			Undo.RecordObject(_settings, "Reimport FMOD event");
 			Undo.RecordObject(bank, "Reimport FMOD event");
-			bank.Import(metadata, new[] { FMODAudioBankImportWindow.CreateImportedEvent(importedEvent, _settings) }, _settings);
+			bank.Import(metadata, new[] { FMODAudioBankImportWindow.CreateImportedEvent(importedEvent, _settings) },
+				_settings);
 			EditorUtility.SetDirty(bank);
 
 			if (!_settings.Banks.Contains(bank))

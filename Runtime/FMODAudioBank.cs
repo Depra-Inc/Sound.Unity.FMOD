@@ -34,7 +34,7 @@ namespace Depra.Sound.FMOD
 
 		public override IEnumerable<(ulong id, string label)> GetAllEventNames() => from entry in _events
 			let eventName = string.IsNullOrWhiteSpace(entry.Name) ? "Unnamed Event" : entry.Name
-			select (entry.Id.Value, $"{eventName} ({entry.Id.Value}) - {eventName}");
+			select (entry.Id.Value, $"{eventName} ({entry.Id.Value})");
 
 #if UNITY_EDITOR
 		internal void Import(FMODBankMetadata metadata, IEnumerable<EventEntry> importedEvents,
