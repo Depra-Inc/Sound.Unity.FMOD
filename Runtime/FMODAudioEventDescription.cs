@@ -31,9 +31,9 @@ namespace Depra.Sound.FMOD
 				}
 			}
 
-			var requirements = _is3D
+			IAudioEventContract requirements = _is3D
 				? new AudioEventRequirements(new List<IAudioEventRequirement> { new PositionRequirement() })
-				: null;
+				: new EmptyContract();
 
 			return new RuntimeAudioEvent(_clip, requirements, parameters.ToArray());
 		}
