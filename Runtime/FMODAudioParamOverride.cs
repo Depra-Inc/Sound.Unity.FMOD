@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace Depra.Sound.FMOD
+﻿namespace Depra.Sound.FMOD
 {
-	[Serializable]
+	[System.Serializable]
 	public sealed class FMODAudioParamOverride
 	{
 		public string Name;
@@ -10,8 +8,16 @@ namespace Depra.Sound.FMOD
 		public float Maximum;
 		public float DefaultValue;
 		public float Value;
-		public bool IsDiscrete;
+		public ParamType Type;
 		public bool IsSupported = true;
 		public bool Enabled;
+		public string[] Labels = System.Array.Empty<string>();
+
+		public enum ParamType
+		{
+			CONTINUOUS,
+			DISCRETE,
+			LABELED,
+		}
 	}
 }

@@ -123,13 +123,17 @@ namespace Depra.Sound.FMOD
 				RuntimeManager.AttachInstanceToGameObject(_cachedInstance, transformParameter);
 				result = RESULT.OK;
 			}
-			else if (parameterId == UnityAudioParamId.LabeledInt)
+			else if (parameter.Type == AudioParamType.LABELED_INT)
 			{
 				result = _cachedInstance.setParameterByName(parameter.ReferenceValue as string, parameter.IntegerValue);
 			}
-			else if (parameterId == UnityAudioParamId.LabeledFloat)
+			else if (parameter.Type == AudioParamType.LABELED_FLOAT)
 			{
 				result = _cachedInstance.setParameterByName(parameter.ReferenceValue as string, parameter.FloatValue);
+			}
+			else  if (parameter.Type == AudioParamType.LABELED_STRING)
+			{
+				result = _cachedInstance.setParameterByNameWithLabel(parameter.Label, parameter.StringValue);
 			}
 			else
 			{

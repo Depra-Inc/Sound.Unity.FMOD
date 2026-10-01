@@ -16,7 +16,8 @@ namespace Depra.Sound.FMOD.Editor
 			var value = property.FindPropertyRelative("Value");
 			var minimum = property.FindPropertyRelative("Minimum");
 			var maximum = property.FindPropertyRelative("Maximum");
-			var discrete = property.FindPropertyRelative("IsDiscrete").boolValue;
+			var type = property.FindPropertyRelative("Type");
+			var labels = property.FindPropertyRelative("Labels");
 			var supported = property.FindPropertyRelative("IsSupported").boolValue;
 			var toggle = new Rect(position.x, position.y, 18f, position.height);
 			var nameRect = new Rect(toggle.xMax + 2f, position.y, Mathf.Min(112f, position.width * 0.32f),
@@ -24,22 +25,36 @@ namespace Depra.Sound.FMOD.Editor
 			var valueRect = new Rect(nameRect.xMax + 4f, position.y,
 				position.xMax - nameRect.xMax - 4f, position.height);
 
-			using (new EditorGUI.DisabledScope(!supported))
-			{
-				enabled.boolValue = EditorGUI.Toggle(toggle, enabled.boolValue);
-			}
-
-			EditorGUI.LabelField(nameRect, name.stringValue, EditorStyles.miniLabel);
+			enabled.boolValue = EditorGUI.Toggle(toggle, enabled.boolValue);
+			EditorGUI.LabelField(nameRect, name.stringValue, EditorStyles.label);
 			using (new EditorGUI.DisabledScope(!enabled.boolValue || !supported))
 			{
 				if (!supported)
 				{
 					EditorGUI.LabelField(valueRect, "Unsupported", EditorStyles.miniLabel);
 				}
-				else if (discrete)
+
+				var paramType = (FMODAudioParamOverride.ParamType)type.enumValueIndex;
+				if (paramType == FMODAudioParamOverride.ParamType.LABELED)
 				{
-					value.floatValue = EditorGUI.IntSlider(valueRect, Mathf.RoundToInt(value.floatValue),
-						Mathf.CeilToInt(minimum.floatValue), Mathf.FloorToInt(maximum.floatValue));
+					if (labels == null || labels.arraySize == 0)
+					{
+						EditorGUI.LabelField(valueRect, "No labels", EditorStyles.miniLabel);
+						return;
+					}
+
+					var labelsArray = new string[labels.arraySize];
+					for (var i = 0; i < labels.arraySize; i++)
+					{
+						labelsArray[i] = labels.GetArrayElementAtIndex(i).stringValue;
+					}
+
+					value.floatValue = EditorGUI.Popup(valueRect, (int)value.floatValue, labelsArray);
+				}
+				else if (paramType == FMODAudioParamOverride.ParamType.DISCRETE)
+				{
+					value.floatValue = EditorGUI.IntSlider(valueRect, (int)value.floatValue,
+						(int)minimum.floatValue, (int)maximum.floatValue);
 				}
 				else
 				{

@@ -182,7 +182,7 @@ namespace Depra.Sound.FMOD.Editor
 			var bank = _banks[_bankIndex];
 			var imports = from eventRef in EventsInSelectedBank()
 				where _selection.Contains(eventRef.Guid.ToString())
-				select ImportEvent(eventRef, table);
+				select CreateImportedEvent(eventRef, table);
 
 			Undo.RecordObject(table, "Allocate FMOD event IDs");
 			Undo.RecordObject(_target, "Import FMOD events");
@@ -226,7 +226,7 @@ namespace Depra.Sound.FMOD.Editor
 
 				var totalSize = bank.FileSizes.Sum(sizeInfo => sizeInfo.Value);
 				var metadata = new FMODBankMetadata { BankPath = bankKey, TotalSize = totalSize };
-				var imports = EventsInBank(bank).Select(editorEvent => ImportEvent(editorEvent, table));
+				var imports = EventsInBank(bank).Select(editorEvent => CreateImportedEvent(editorEvent, table));
 				_target.Import(metadata, imports, table);
 				EditorUtility.SetDirty(_target);
 				if (!table.Banks.Contains(_target))
@@ -259,7 +259,7 @@ namespace Depra.Sound.FMOD.Editor
 			return true;
 		}
 
-		private static FMODAudioBank.EventEntry ImportEvent(EditorEventRef eventRef, AudioProjectSettings table)
+		internal static FMODAudioBank.EventEntry CreateImportedEvent(EditorEventRef eventRef, AudioProjectSettings table)
 		{
 			var eventId = table.AllocateEventId();
 			var eventReference = new EventReference { Guid = eventRef.Guid, Path = eventRef.Path };
@@ -274,20 +274,17 @@ namespace Depra.Sound.FMOD.Editor
 			};
 		}
 
-		private static FMODAudioParamOverride CreateParameter(EditorParamRef parameter)
+		private static FMODAudioParamOverride CreateParameter(EditorParamRef param) => new()
 		{
-			var supported = parameter.Type == ParameterType.Continuous || parameter.Type == ParameterType.Discrete;
-			return new FMODAudioParamOverride
-			{
-				Name = parameter.Name,
-				Minimum = parameter.Min,
-				Maximum = parameter.Max,
-				DefaultValue = parameter.Default,
-				Value = parameter.Default,
-				IsDiscrete = parameter.Type == ParameterType.Discrete,
-				IsSupported = supported && (parameter.Type != ParameterType.Discrete ||
-				                            Mathf.CeilToInt(parameter.Min) <= Mathf.FloorToInt(parameter.Max))
-			};
-		}
+			Name = param.Name,
+			Minimum = param.Min,
+			Maximum = param.Max,
+			DefaultValue = param.Default,
+			Value = param.Default,
+			Labels = param.Labels,
+			Type = (FMODAudioParamOverride.ParamType)param.Type,
+			IsSupported = param.Type != ParameterType.Discrete ||
+			              Mathf.CeilToInt(param.Min) <= Mathf.FloorToInt(param.Max)
+		};
 	}
 }

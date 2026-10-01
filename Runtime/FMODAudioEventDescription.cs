@@ -23,25 +23,28 @@ namespace Depra.Sound.FMOD
 		public IAudioEventDescription Compile()
 		{
 			var parameters = new List<AudioParam>();
-			foreach (var parameter in _parameters)
+			foreach (var fmodParam in _parameters)
 			{
-				if (parameter.Enabled && parameter.IsSupported)
+				if (fmodParam.Enabled && fmodParam.IsSupported)
 				{
-					parameters.Add(parameter.IsDiscrete
-						? AudioParam.CustomRef(UnityAudioParamId.LabeledInt, UnityAudioParamId.LabeledInt,
-							parameter.Name,
-							integerValue: Mathf.RoundToInt(parameter.Value))
-						: AudioParam.CustomRef(UnityAudioParamId.LabeledFloat, UnityAudioParamId.LabeledFloat,
-							parameter.Name,
-							float0: parameter.Value));
+					parameters.Add(Compile(fmodParam));
 				}
 			}
 
 			var requirements = _is3D
 				? new AudioEventRequirements(new List<IAudioEventRequirement> { new PositionRequirement() })
 				: null;
+
 			return new RuntimeAudioEvent(_clip, requirements, parameters.ToArray());
 		}
+
+		private AudioParam Compile(FMODAudioParamOverride param) => param.Type switch
+		{
+			FMODAudioParamOverride.ParamType.DISCRETE => AudioParam.LabeledInt(AudioParamId.Custom, param.Name, (int)param.Value),
+			FMODAudioParamOverride.ParamType.CONTINUOUS => AudioParam.LabeledFloat(AudioParamId.Custom, param.Name, param.Value),
+			FMODAudioParamOverride.ParamType.LABELED => AudioParam.LabeledString(AudioParamId.Custom, param.Name, param.Labels[(int)param.Value]),
+			_ => default
+		};
 
 #if UNITY_EDITOR
 		public static FMODAudioEventDescription Create(EventReference reference,
@@ -66,7 +69,8 @@ namespace Depra.Sound.FMOD
 			Maximum = parameter.Maximum,
 			DefaultValue = parameter.DefaultValue,
 			Value = parameter.Value,
-			IsDiscrete = parameter.IsDiscrete,
+			Labels = parameter.Labels == null ? System.Array.Empty<string>() : (string[])parameter.Labels.Clone(),
+			Type = parameter.Type,
 			IsSupported = parameter.IsSupported,
 			Enabled = parameter.Enabled
 		};
