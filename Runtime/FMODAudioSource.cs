@@ -23,16 +23,16 @@ namespace Depra.Sound.FMOD
 		private const string FILE_NAME = "FMOD Audio Source";
 		private static readonly Type SUPPORTED_CLIP = typeof(FMODAudioClip);
 
-		private EventInstance _cachedInstance;
+		private EventInstance _eventInstance;
 
 		public event Action Started;
 		public event Action<AudioStopReason> Stopped;
 
 		private void OnDestroy()
 		{
-			if (_cachedInstance.isValid())
+			if (_eventInstance.isValid())
 			{
-				_cachedInstance.release();
+				_eventInstance.release();
 			}
 		}
 
@@ -54,40 +54,40 @@ namespace Depra.Sound.FMOD
 		{
 			Guard.AgainstUnsupportedType(clip, SUPPORTED_CLIP);
 			var fmodClip = (FMODAudioClip)clip;
-			_cachedInstance = RuntimeManager.CreateInstance(fmodClip);
-			if (!_cachedInstance.isValid())
+			_eventInstance = RuntimeManager.CreateInstance(fmodClip);
+			if (!_eventInstance.isValid())
 			{
 				return;
 			}
 
 			Current = fmodClip;
-			StartClip(_cachedInstance);
+			StartClip(_eventInstance);
 		}
 
 		public void Play(IAudioClip clip,
-			ReadOnlySpan<AudioParam> staticParams,
-			ReadOnlySpan<AudioParam> dynamicParams)
+			ReadOnlySpan<AudioParam> defaultParams,
+			ReadOnlySpan<AudioParam> optionalParams)
 		{
 			Guard.AgainstUnsupportedType(clip, SUPPORTED_CLIP);
 			var fmodClip = (FMODAudioClip)clip;
-			_cachedInstance = RuntimeManager.CreateInstance(fmodClip);
-			if (!_cachedInstance.isValid())
+			_eventInstance = RuntimeManager.CreateInstance(fmodClip);
+			if (!_eventInstance.isValid())
 			{
 				return;
 			}
 
-			foreach (var parameter in staticParams)
+			foreach (var param in defaultParams)
 			{
-				SetParameter(parameter);
+				SetParameter(param);
 			}
 
-			foreach (var parameter in dynamicParams)
+			foreach (var param in optionalParams)
 			{
-				SetParameter(parameter);
+				SetParameter(param);
 			}
 
 			Current = fmodClip;
-			StartClip(_cachedInstance);
+			StartClip(_eventInstance);
 		}
 
 		private void SetParameter(in AudioParam parameter)
@@ -96,11 +96,11 @@ namespace Depra.Sound.FMOD
 			var parameterId = parameter.Id;
 			if (parameterId == AudioParamId.Volume && parameter.Type == AudioParamType.FLOAT)
 			{
-				result = _cachedInstance.setVolume(parameter.FloatValue);
+				result = _eventInstance.setVolume(parameter.FloatValue);
 			}
 			else if (parameterId == AudioParamId.Loop && parameter.Type == AudioParamType.BOOL)
 			{
-				result = _cachedInstance.setParameterByName("Loop", parameter.IntegerValue);
+				result = _eventInstance.setParameterByName("Loop", parameter.IntegerValue);
 			}
 			else if (parameterId == AudioParamId.Pan && parameter.Type == AudioParamType.FLOAT)
 			{
@@ -109,30 +109,30 @@ namespace Depra.Sound.FMOD
 			}
 			else if (parameterId == AudioParamId.Pitch && parameter.Type == AudioParamType.FLOAT)
 			{
-				result = _cachedInstance.setPitch(parameter.FloatValue);
+				result = _eventInstance.setPitch(parameter.FloatValue);
 			}
 			else if (parameterId == UnityAudioParamId.Position && parameter.Type == AudioParamType.VECTOR3)
 			{
 				var position = new Vector3(parameter.Float0, parameter.Float1, parameter.Float2);
-				result = _cachedInstance.set3DAttributes(position.To3DAttributes());
+				result = _eventInstance.set3DAttributes(position.To3DAttributes());
 			}
 			else if (parameterId == UnityAudioParamId.Transform && parameter.Type == AudioParamType.REFERENCE &&
 			         parameter.ReferenceValue is Transform transformParameter)
 			{
-				RuntimeManager.AttachInstanceToGameObject(_cachedInstance, transformParameter);
+				RuntimeManager.AttachInstanceToGameObject(_eventInstance, transformParameter);
 				result = RESULT.OK;
 			}
 			else if (parameter.Type == AudioParamType.NAMED_INT)
 			{
-				result = _cachedInstance.setParameterByName(parameter.Name, parameter.IntegerValue);
+				result = _eventInstance.setParameterByName(parameter.Name, parameter.IntegerValue);
 			}
 			else if (parameter.Type == AudioParamType.NAMED_FLOAT)
 			{
-				result = _cachedInstance.setParameterByName(parameter.Name, parameter.FloatValue);
+				result = _eventInstance.setParameterByName(parameter.Name, parameter.FloatValue);
 			}
 			else  if (parameter.Type == AudioParamType.NAMED_STRING)
 			{
-				result = _cachedInstance.setParameterByNameWithLabel(parameter.Name, parameter.StringValue);
+				result = _eventInstance.setParameterByNameWithLabel(parameter.Name, parameter.StringValue);
 			}
 			else
 			{
@@ -167,18 +167,18 @@ namespace Depra.Sound.FMOD
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void OnStop(AudioStopReason reason)
 		{
-			_cachedInstance.stop(_stopMode);
-			_cachedInstance.release();
-			_cachedInstance = default;
+			_eventInstance.stop(_stopMode);
+			_eventInstance.release();
+			_eventInstance = default;
 
 			Stopped?.Invoke(reason);
 		}
 
 		private bool IsPlayingInternal()
 		{
-			if (!_cachedInstance.isValid() || _cachedInstance.getPlaybackState(out var state) != RESULT.OK)
+			if (!_eventInstance.isValid() || _eventInstance.getPlaybackState(out var state) != RESULT.OK)
 			{
-				VerboseInfo($"'{_cachedInstance}' is not valid!");
+				VerboseInfo($"'{_eventInstance}' is not valid!");
 				return false;
 			}
 

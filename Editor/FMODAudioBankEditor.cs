@@ -83,7 +83,8 @@ namespace Depra.Sound.FMOD.Editor
 
 		private void DrawEventList()
 		{
-			if (_events != null && _events.serializedProperty.serializedObject.targetObject == serializedObject.targetObject)
+			if (_events != null && _events.serializedProperty.serializedObject.targetObject ==
+			    serializedObject.targetObject)
 			{
 				return;
 			}
@@ -124,7 +125,8 @@ namespace Depra.Sound.FMOD.Editor
 
 		private void DrawContainerList()
 		{
-			if (_containers != null && _containers.serializedProperty.serializedObject.targetObject == serializedObject.targetObject)
+			if (_containers != null && _containers.serializedProperty.serializedObject.targetObject ==
+			    serializedObject.targetObject)
 			{
 				return;
 			}
@@ -160,12 +162,11 @@ namespace Depra.Sound.FMOD.Editor
 			var index = entries.arraySize;
 			entries.InsertArrayElementAtIndex(index);
 			var entry = entries.GetArrayElementAtIndex(index);
-			entry.FindPropertyRelative(nameof(AudioContainerEntry.Name)).stringValue = $"Container {index + 1}";
 			Undo.RecordObject(_settings, "Allocate audio container ID");
 			var containerId = _settings.AllocateEventId();
 			EditorUtility.SetDirty(_settings);
-			SetId(entry.FindPropertyRelative(nameof(AudioContainerEntry.Id)), containerId);
-			entry.FindPropertyRelative(nameof(AudioContainerEntry.Container)).objectReferenceValue = null;
+			SetId(entry.FindPropertyRelative(nameof(AudioContainerDefinition.Id)), containerId);
+			entry.FindPropertyRelative(nameof(AudioContainerDefinition.Container)).objectReferenceValue = null;
 			list.index = index;
 		}
 
@@ -206,16 +207,7 @@ namespace Depra.Sound.FMOD.Editor
 			return line + 2f + line + 2f + eventHeight + 2f + parametersHeight + 8f;
 		}
 
-		private static float GetContainerHeight(SerializedProperty entry)
-		{
-			var line = EditorGUIUtility.singleLineHeight;
-			if (!entry.isExpanded)
-			{
-				return line + 6f;
-			}
-
-			return line + 2f + line + 2f + line + 8f;
-		}
+		private static float GetContainerHeight(SerializedProperty entry) => EditorGUIUtility.singleLineHeight + 6f;
 
 		private void DrawEventRow(Rect rect, SerializedProperty entries, int index)
 		{
@@ -412,28 +404,17 @@ namespace Depra.Sound.FMOD.Editor
 			}
 
 			var entry = entries.GetArrayElementAtIndex(index);
-			var name = entry.FindPropertyRelative(nameof(AudioContainerEntry.Name));
-			var id = entry.FindPropertyRelative(nameof(AudioContainerEntry.Id));
-			var header = new Rect(rect.x, rect.y + 2f, rect.width, EditorGUIUtility.singleLineHeight);
-			var idValue = id.FindPropertyRelative(nameof(AudioContainerEntry.Id.Value));
-			entry.isExpanded = EditorGUI.Foldout(header, entry.isExpanded,
-				$"{(string.IsNullOrWhiteSpace(name.stringValue) ? $"Container {index + 1}" : name.stringValue)}   (ID {idValue.ulongValue})",
-				true);
-			if (!entry.isExpanded)
-			{
-				return;
-			}
+			var id = entry.FindPropertyRelative(nameof(AudioContainerDefinition.Id));
+			var idValue = id.FindPropertyRelative(nameof(AudioContainerDefinition.Id.Value));
+			var description = entry.FindPropertyRelative(nameof(AudioContainerDefinition.Container));
+			var name = entry.FindPropertyRelative(nameof(AudioEventContainer.name))?.stringValue ?? string.Empty;
 
-			var y = header.yMax + 2f;
 			var indent = rect.x + 14f;
 			var width = rect.width - 14f;
-			var nameRect = new Rect(indent, y, width, EditorGUIUtility.singleLineHeight);
-			EditorGUI.PropertyField(nameRect, name);
-			y = nameRect.yMax + 2f;
-			var description = entry.FindPropertyRelative(nameof(AudioContainerEntry.Container));
-			EditorGUI.ObjectField(new Rect(indent, y, width, EditorGUIUtility.singleLineHeight + 2f),
-				description,
-				typeof(AudioEventContainer), GUIContent.none);
+			var content = new GUIContent(
+				$"{(string.IsNullOrWhiteSpace(name) ? $"Container {index + 1}" : name)}   (ID {idValue.ulongValue})");
+			EditorGUI.ObjectField(new Rect(indent, rect.y + 2f, width, EditorGUIUtility.singleLineHeight),
+				description, typeof(AudioEventContainer), content);
 		}
 
 		private static void DeleteArrayElement(SerializedProperty array, int index)

@@ -10,10 +10,10 @@ namespace Depra.Sound.FMOD
 	public sealed class FMODAudioBank : AudioBankAsset
 	{
 		[SerializeField] private List<EventEntry> _events;
-		[SerializeField] private List<AudioContainerEntry> _containers;
+		[SerializeField] private List<AudioContainerDefinition> _containers;
 		[SerializeField] private FMODBankMetadata _metadata;
 
-		public override string IconPath => $"Assets/Plugins/FMOD/images/StudioIcon.png";
+		public override string IconPath => "Assets/Plugins/FMOD/images/StudioIcon.png";
 
 		public override bool Contains(AudioEventId id) =>
 			(_events != null && _events.Any(entry => entry.Id == id)) ||
@@ -32,9 +32,26 @@ namespace Depra.Sound.FMOD
 			}
 		}
 
-		public override IEnumerable<(ulong id, string label)> GetAllEventNames() => from entry in _events
-			let eventName = string.IsNullOrWhiteSpace(entry.Name) ? "Unnamed Event" : entry.Name
-			select (entry.Id.Value, $"{eventName} ({entry.Id.Value})");
+		public override IEnumerable<(ulong id, string label)> GetAllEventNames()
+		{
+			foreach (var entry in _events)
+			{
+				var eventName = string.IsNullOrWhiteSpace(entry.Name)
+					? "Unnamed Event"
+					: entry.Name;
+
+				yield return (entry.Id.Value, $"{eventName} ({entry.Id.Value})");
+			}
+
+			foreach (var entry in _containers)
+			{
+				var containerName = string.IsNullOrWhiteSpace(entry.Container.name)
+					? "Unnamed Container"
+					: entry.Container.name;
+
+				yield return (entry.Id.Value, $"{containerName} ({entry.Id.Value})");
+			}
+		}
 
 #if UNITY_EDITOR
 		internal void Import(FMODBankMetadata metadata, IEnumerable<EventEntry> importedEvents,
