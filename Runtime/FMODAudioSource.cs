@@ -4,7 +4,6 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Depra.Sound;
 using FMOD;
 using FMOD.Studio;
 using FMODUnity;
@@ -91,7 +90,7 @@ namespace Depra.Sound.FMOD
 			StartClip(_cachedInstance);
 		}
 
-		public void SetParameter(in AudioParam parameter)
+		private void SetParameter(in AudioParam parameter)
 		{
 			RESULT result;
 			var parameterId = parameter.Id;
@@ -105,8 +104,8 @@ namespace Depra.Sound.FMOD
 			}
 			else if (parameterId == AudioParamId.Pan && parameter.Type == AudioParamType.FLOAT)
 			{
-				result = RESULT.ERR_UNSUPPORTED;
 				// FMOD does not have a direct pan parameter.
+				result = RESULT.ERR_UNSUPPORTED;
 			}
 			else if (parameterId == AudioParamId.Pitch && parameter.Type == AudioParamType.FLOAT)
 			{
@@ -123,24 +122,23 @@ namespace Depra.Sound.FMOD
 				RuntimeManager.AttachInstanceToGameObject(_cachedInstance, transformParameter);
 				result = RESULT.OK;
 			}
-			else if (parameter.Type == AudioParamType.LABELED_INT)
+			else if (parameter.Type == AudioParamType.NAMED_INT)
 			{
-				result = _cachedInstance.setParameterByName(parameter.ReferenceValue as string, parameter.IntegerValue);
+				result = _cachedInstance.setParameterByName(parameter.Name, parameter.IntegerValue);
 			}
-			else if (parameter.Type == AudioParamType.LABELED_FLOAT)
+			else if (parameter.Type == AudioParamType.NAMED_FLOAT)
 			{
-				result = _cachedInstance.setParameterByName(parameter.ReferenceValue as string, parameter.FloatValue);
+				result = _cachedInstance.setParameterByName(parameter.Name, parameter.FloatValue);
 			}
-			else  if (parameter.Type == AudioParamType.LABELED_STRING)
+			else  if (parameter.Type == AudioParamType.NAMED_STRING)
 			{
-				result = _cachedInstance.setParameterByNameWithLabel(parameter.Label, parameter.StringValue);
+				result = _cachedInstance.setParameterByNameWithLabel(parameter.Name, parameter.StringValue);
 			}
 			else
 			{
 				result = RESULT.ERR_INVALID_PARAM;
 			}
 
-//LabelParameter label => _cachedInstance.setParameterByNameWithLabel(label.Name, label.Value),
 			if (result != RESULT.OK)
 			{
 				VerboseError($"Failed to set parameter '{parameterId}' with result: '{result}'");

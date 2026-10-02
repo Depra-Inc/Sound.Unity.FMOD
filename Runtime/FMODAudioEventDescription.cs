@@ -40,9 +40,9 @@ namespace Depra.Sound.FMOD
 
 		private AudioParam Compile(FMODAudioParamOverride param) => param.Type switch
 		{
-			FMODAudioParamOverride.ParamType.DISCRETE => AudioParam.LabeledInt(AudioParamId.Custom, param.Name, (int)param.Value),
-			FMODAudioParamOverride.ParamType.CONTINUOUS => AudioParam.LabeledFloat(AudioParamId.Custom, param.Name, param.Value),
-			FMODAudioParamOverride.ParamType.LABELED => AudioParam.LabeledString(AudioParamId.Custom, param.Name, param.Labels[(int)param.Value]),
+			FMODAudioParamOverride.ParamType.DISCRETE => AudioParam.NamedInt(AudioParamId.Custom, param.Name, (int)param.Value),
+			FMODAudioParamOverride.ParamType.CONTINUOUS => AudioParam.NamedFloat(AudioParamId.Custom, param.Name, param.Value),
+			FMODAudioParamOverride.ParamType.LABELED => AudioParam.NamedString(AudioParamId.Custom, param.Name, param.Labels[(int)param.Value]),
 			_ => default
 		};
 
@@ -69,7 +69,7 @@ namespace Depra.Sound.FMOD
 			Maximum = parameter.Maximum,
 			DefaultValue = parameter.DefaultValue,
 			Value = parameter.Value,
-			Labels = parameter.Labels == null ? System.Array.Empty<string>() : (string[])parameter.Labels.Clone(),
+			Labels = parameter.Labels == null ? Array.Empty<string>() : (string[])parameter.Labels.Clone(),
 			Type = parameter.Type,
 			IsSupported = parameter.IsSupported,
 			Enabled = parameter.Enabled
