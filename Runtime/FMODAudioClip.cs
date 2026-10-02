@@ -16,6 +16,7 @@ namespace Depra.Sound.FMOD
 
 		public static implicit operator EventReference(FMODAudioClip clip) => clip._event;
 
+		public FMODAudioClip() { }
 		public FMODAudioClip(EventReference @event) => _event = @event;
 
 		public EventReference Event => _event;
