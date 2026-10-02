@@ -93,46 +93,45 @@ namespace Depra.Sound.FMOD
 		private void SetParameter(in AudioParam parameter)
 		{
 			RESULT result;
-			var parameterId = parameter.Id;
-			if (parameterId == AudioParamId.Volume && parameter.Type == AudioParamType.FLOAT)
+			var paramId = parameter.Id;
+			if (paramId == AudioParamId.Volume && parameter.Type == AudioParamType.FLOAT)
 			{
 				result = _eventInstance.setVolume(parameter.FloatValue);
 			}
-			else if (parameterId == AudioParamId.Loop && parameter.Type == AudioParamType.BOOL)
+			else if (paramId == AudioParamId.Loop && parameter.Type == AudioParamType.BOOL)
 			{
 				result = _eventInstance.setParameterByName("Loop", parameter.IntegerValue);
 			}
-			else if (parameterId == AudioParamId.Pan && parameter.Type == AudioParamType.FLOAT)
+			else if (paramId == AudioParamId.Pan && parameter.Type == AudioParamType.FLOAT)
 			{
 				// FMOD does not have a direct pan parameter.
 				result = RESULT.ERR_UNSUPPORTED;
 			}
-			else if (parameterId == AudioParamId.Pitch && parameter.Type == AudioParamType.FLOAT)
+			else if (paramId == AudioParamId.Pitch && parameter.Type == AudioParamType.FLOAT)
 			{
 				result = _eventInstance.setPitch(parameter.FloatValue);
-			}
-			else if (parameterId == UnityAudioParamId.Position && parameter.Type == AudioParamType.VECTOR3)
-			{
-				var position = new Vector3(parameter.Float0, parameter.Float1, parameter.Float2);
-				result = _eventInstance.set3DAttributes(position.To3DAttributes());
-			}
-			else if (parameterId == UnityAudioParamId.Transform && parameter.Type == AudioParamType.REFERENCE &&
-			         parameter.ReferenceValue is Transform transformParameter)
-			{
-				RuntimeManager.AttachInstanceToGameObject(_eventInstance, transformParameter);
-				result = RESULT.OK;
-			}
-			else if (parameter.Type == AudioParamType.NAMED_INT)
-			{
-				result = _eventInstance.setParameterByName(parameter.Name, parameter.IntegerValue);
 			}
 			else if (parameter.Type == AudioParamType.NAMED_FLOAT)
 			{
 				result = _eventInstance.setParameterByName(parameter.Name, parameter.FloatValue);
 			}
-			else  if (parameter.Type == AudioParamType.NAMED_STRING)
+			else if (parameter.Type == AudioParamType.NAMED_INT)
+			{
+				result = _eventInstance.setParameterByName(parameter.Name, parameter.IntegerValue);
+			}
+			else if (parameter.Type == AudioParamType.NAMED_STRING)
 			{
 				result = _eventInstance.setParameterByNameWithLabel(parameter.Name, parameter.StringValue);
+			}
+			else if (paramId == UnityAudioParamId.Position && parameter.Type == AudioParamType.VECTOR3)
+			{
+				var position = new Vector3(parameter.Float0, parameter.Float1, parameter.Float2);
+				result = _eventInstance.set3DAttributes(position.To3DAttributes());
+			}
+			else if (paramId == UnityAudioParamId.Transform && parameter.ReferenceValue is Transform transformParameter)
+			{
+				RuntimeManager.AttachInstanceToGameObject(_eventInstance, transformParameter);
+				result = RESULT.OK;
 			}
 			else
 			{
@@ -141,7 +140,7 @@ namespace Depra.Sound.FMOD
 
 			if (result != RESULT.OK)
 			{
-				VerboseError($"Failed to set parameter '{parameterId}' with result: '{result}'");
+				VerboseError($"Failed to set parameter '{paramId}' with result: '{result}'");
 			}
 		}
 
