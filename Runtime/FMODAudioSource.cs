@@ -64,9 +64,7 @@ namespace Depra.Sound.FMOD
 			StartClip(_eventInstance);
 		}
 
-		public void Play(IAudioClip clip,
-			ReadOnlySpan<AudioParam> defaultParams,
-			ReadOnlySpan<AudioParam> optionalParams)
+		public void Play(IAudioClip clip, ReadOnlySpan<AudioParam> parameters)
 		{
 			Guard.AgainstUnsupportedType(clip, SUPPORTED_CLIP);
 			var fmodClip = (FMODAudioClip)clip;
@@ -76,12 +74,7 @@ namespace Depra.Sound.FMOD
 				return;
 			}
 
-			foreach (var param in defaultParams)
-			{
-				SetParameter(param);
-			}
-
-			foreach (var param in optionalParams)
+			foreach (var param in parameters)
 			{
 				SetParameter(param);
 			}

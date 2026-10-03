@@ -32,8 +32,25 @@ namespace Depra.Sound.FMOD
 			}
 
 			var contract = new AudioEventContract(parameters.ToArray(), null);
-
 			return new RuntimeAudioEvent(_clip, contract);
+		}
+
+		internal void PreserveOverrides(FMODAudioEventDescription previous)
+		{
+			foreach (var parameter in _parameters)
+			{
+				foreach (var oldParameter in previous._parameters)
+				{
+					if (parameter.Name != oldParameter.Name)
+					{
+						continue;
+					}
+
+					parameter.Enabled = oldParameter.Enabled;
+					parameter.Value = Mathf.Clamp(oldParameter.Value, parameter.Minimum, parameter.Maximum);
+					break;
+				}
+			}
 		}
 
 		private AudioParam Compile(FMODAudioParamOverride param) => param.Type switch
@@ -73,23 +90,5 @@ namespace Depra.Sound.FMOD
 			Enabled = parameter.Enabled
 		};
 #endif
-
-		internal void PreserveOverrides(FMODAudioEventDescription previous)
-		{
-			foreach (var parameter in _parameters)
-			{
-				foreach (var oldParameter in previous._parameters)
-				{
-					if (parameter.Name != oldParameter.Name)
-					{
-						continue;
-					}
-
-					parameter.Enabled = oldParameter.Enabled;
-					parameter.Value = Mathf.Clamp(oldParameter.Value, parameter.Minimum, parameter.Maximum);
-					break;
-				}
-			}
-		}
 	}
 }
