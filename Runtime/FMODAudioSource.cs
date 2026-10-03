@@ -23,6 +23,7 @@ namespace Depra.Sound.FMOD
 		private const string FILE_NAME = "FMOD Audio Source";
 		private static readonly Type SUPPORTED_CLIP = typeof(FMODAudioClip);
 
+		private FMODAudioClip _currentClip;
 		private EventInstance _eventInstance;
 
 		public event Action Started;
@@ -37,13 +38,12 @@ namespace Depra.Sound.FMOD
 		}
 
 		public bool IsPlaying => IsPlayingInternal();
-		public FMODAudioClip Current { get; private set; }
-		IAudioClip IAudioSource.Current => Current;
+		IAudioClip IAudioSource.Current => _currentClip;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Stop()
 		{
-			Current = default;
+			_currentClip = null;
 			if (IsPlaying)
 			{
 				OnStop(AudioStopReason.STOPPED);
@@ -60,7 +60,7 @@ namespace Depra.Sound.FMOD
 				return;
 			}
 
-			Current = fmodClip;
+			_currentClip = fmodClip;
 			StartClip(_eventInstance);
 		}
 
@@ -79,7 +79,7 @@ namespace Depra.Sound.FMOD
 				SetParameter(param);
 			}
 
-			Current = fmodClip;
+			_currentClip = fmodClip;
 			StartClip(_eventInstance);
 		}
 
@@ -116,7 +116,7 @@ namespace Depra.Sound.FMOD
 			{
 				result = _eventInstance.setParameterByNameWithLabel(parameter.Name, parameter.StringValue);
 			}
-			else if (paramId == UnityAudioParamId.Position && parameter.Type == AudioParamType.VECTOR3)
+			else if (paramId == UnityAudioParamId.Position && parameter.Type == AudioParamType.FLOAT3)
 			{
 				var position = new Vector3(parameter.Float0, parameter.Float1, parameter.Float2);
 				result = _eventInstance.set3DAttributes(position.To3DAttributes());
@@ -162,6 +162,7 @@ namespace Depra.Sound.FMOD
 			_eventInstance.stop(_stopMode);
 			_eventInstance.release();
 			_eventInstance = default;
+			_currentClip = null;
 
 			Stopped?.Invoke(reason);
 		}
