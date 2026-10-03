@@ -18,10 +18,12 @@ namespace Depra.Sound.FMOD.Editor
 			var clip = property.FindPropertyRelative("_clip")?.FindPropertyRelative("_event");
 			var firstLineHeight = EditorGUIUtility.singleLineHeight;
 			var eventLabelRect = new Rect(position.x, position.y, EVENT_LABEL_WIDTH, firstLineHeight);
+			var badgeWidth = 20f;
+			var buttonWidth = DETAILS_BUTTON_WIDTH;
+			var buttonRect = new Rect(position.xMax - buttonWidth, position.y, buttonWidth, firstLineHeight);
+			var badgeRect = new Rect(buttonRect.x - badgeWidth - 4f, position.y, badgeWidth, firstLineHeight);
 			var fieldRect = new Rect(eventLabelRect.xMax, position.y,
-				position.width - EVENT_LABEL_WIDTH - DETAILS_BUTTON_WIDTH - 4f, firstLineHeight);
-			var buttonRect = new Rect(fieldRect.xMax + 4f, position.y, DETAILS_BUTTON_WIDTH,
-				EditorGUIUtility.singleLineHeight);
+				badgeRect.x - eventLabelRect.xMax - 4f, firstLineHeight);
 
 			EditorGUI.LabelField(eventLabelRect, "Event");
 
@@ -33,6 +35,9 @@ namespace Depra.Sound.FMOD.Editor
 			{
 				EditorGUI.LabelField(fieldRect, "FMOD Event is missing");
 			}
+
+			var is3D = property.FindPropertyRelative("_is3D")?.boolValue ?? false;
+			DrawSpatialBadge(badgeRect, is3D);
 
 			if (GUI.Button(buttonRect, "Details"))
 			{
@@ -173,7 +178,7 @@ namespace Depra.Sound.FMOD.Editor
 		}
 
 		private static float GetDetailsHeight() => EditorGUIUtility.singleLineHeight * 3f + 8f;
-
+		
 		private static void DrawDetailsContent(Rect rect, SerializedProperty property)
 		{
 			ReadTitleAndGuid(property, out var title, out var guidValue);
@@ -321,6 +326,14 @@ namespace Depra.Sound.FMOD.Editor
 							minimum.floatValue, maximum.floatValue);
 						break;
 				}
+			}
+		}
+
+		private static void DrawSpatialBadge(Rect rect, bool is3D)
+		{
+			if (!is3D)
+			{
+				GUI.Label(rect, new GUIContent(EditorIcons.BADGE_2D, "2D non-spatial event"));
 			}
 		}
 	}
