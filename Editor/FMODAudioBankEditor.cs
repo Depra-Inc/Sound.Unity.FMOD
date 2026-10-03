@@ -136,7 +136,7 @@ namespace Depra.Sound.FMOD.Editor
 			{
 				elementHeightCallback = index => index >= entries.arraySize
 					? EditorGUIUtility.singleLineHeight
-					: GetContainerHeight(entries.GetArrayElementAtIndex(index)),
+					: GetContainerHeight(),
 				drawHeaderCallback = rect => EditorGUI.LabelField(rect, $"Containers ({entries.arraySize})"),
 				drawElementCallback = (rect, index, _, _) => DrawContainerRow(rect, entries, index),
 				onAddCallback = list => AddContainer(entries, list),
@@ -190,24 +190,16 @@ namespace Depra.Sound.FMOD.Editor
 			}
 
 			var description = entry.FindPropertyRelative(nameof(FMODAudioBank.EventEntry.Description));
-			var clip = description.FindPropertyRelative("_clip")?.FindPropertyRelative("_event");
-			if (clip?.boxedValue == null)
+			if (description == null)
 			{
 				return line + 6f;
 			}
 
-			var eventHeight = EditorGUI.GetPropertyHeight(clip, new GUIContent("Event"));
-			var parameters = description.FindPropertyRelative("_parameters");
-			if (parameters == null || parameters.arraySize == 0)
-			{
-				return line + 2f + line + 2f + eventHeight + 8f;
-			}
-
-			var parametersHeight = GetStaticParametersHeight(parameters);
-			return line + 2f + line + 2f + eventHeight + 2f + parametersHeight + 8f;
+			var eventHeight = EditorGUI.GetPropertyHeight(description, new GUIContent("Event"), true);
+			return line + 2f + line + 2f + eventHeight + 6f;
 		}
 
-		private static float GetContainerHeight(SerializedProperty entry) => EditorGUIUtility.singleLineHeight + 6f;
+		private static float GetContainerHeight() => EditorGUIUtility.singleLineHeight + 6f;
 
 		private void DrawEventRow(Rect rect, SerializedProperty entries, int index)
 		{
@@ -259,25 +251,15 @@ namespace Depra.Sound.FMOD.Editor
 			var nameRect = new Rect(indent, y, width, EditorGUIUtility.singleLineHeight);
 			EditorGUI.PropertyField(nameRect, eventName);
 			var description = entry.FindPropertyRelative(nameof(FMODAudioBank.EventEntry.Description));
-
-			y = nameRect.yMax + 2f;
-			var clip = description.FindPropertyRelative("_clip")?.FindPropertyRelative("_event");
-			if (clip?.boxedValue == null)
+			if (description == null)
 			{
 				return;
 			}
 
+			y = nameRect.yMax + 2f;
 			var eventContent = new GUIContent("Event");
-			var eventHeight = EditorGUI.GetPropertyHeight(clip, eventContent, true);
-			EditorGUI.PropertyField(new Rect(indent, y, width, eventHeight), clip, eventContent);
-
-			var parameters = description.FindPropertyRelative("_parameters");
-			if (parameters is { arraySize: > 0 })
-			{
-				y = y + eventHeight + 2f;
-				var parametersRect = new Rect(indent, y, width, GetStaticParametersHeight(parameters));
-				DrawStaticParameters(parametersRect, parameters, new GUIContent("Required Parameters"));
-			}
+			var eventHeight = EditorGUI.GetPropertyHeight(description, eventContent, true);
+			EditorGUI.PropertyField(new Rect(indent, y, width, eventHeight), description, eventContent, true);
 		}
 
 		private void DuplicateEvent(SerializedProperty entries, int index)
@@ -430,6 +412,7 @@ namespace Depra.Sound.FMOD.Editor
 		private static void SetId(SerializedProperty id, ulong value) =>
 			id.FindPropertyRelative("Value").ulongValue = value;
 
+
 		private bool MatchesEventSearch(SerializedProperty eventEntry)
 		{
 			if (string.IsNullOrWhiteSpace(_eventSearch))
@@ -469,50 +452,6 @@ namespace Depra.Sound.FMOD.Editor
 			return $"{size:0.##} {SIZE_SUFFIX[order]}";
 		}
 
-		private static float GetStaticParametersHeight(SerializedProperty array)
-		{
-			var line = EditorGUIUtility.singleLineHeight;
-			var height = line;
-			if (!array.isExpanded)
-			{
-				return height;
-			}
-
-			for (var index = 0; index < array.arraySize; index++)
-			{
-				var element = array.GetArrayElementAtIndex(index);
-				height += EditorGUI.GetPropertyHeight(element, true) + 2f;
-			}
-
-			return height;
-		}
-
-		private static void DrawStaticParameters(Rect rect, SerializedProperty array, GUIContent label)
-		{
-			var line = EditorGUIUtility.singleLineHeight;
-			var y = rect.y;
-
-			var headerRect = new Rect(rect.x, y, rect.width, line);
-			array.isExpanded = EditorGUI.Foldout(headerRect, array.isExpanded, label, true);
-			if (!array.isExpanded)
-			{
-				return;
-			}
-
-			y += line + 2f;
-			var oldIndent = EditorGUI.indentLevel;
-			EditorGUI.indentLevel++;
-
-			for (var index = 0; index < array.arraySize; index++)
-			{
-				var element = array.GetArrayElementAtIndex(index);
-				var elementHeight = EditorGUI.GetPropertyHeight(element, true);
-				var elementRect = new Rect(rect.x, y, rect.width, elementHeight);
-				EditorGUI.PropertyField(elementRect, element, new GUIContent($"Element {index + 1}"), true);
-				y += elementHeight + 2f;
-			}
-
-			EditorGUI.indentLevel = oldIndent;
-		}
+		// ...existing code...
 	}
 }
