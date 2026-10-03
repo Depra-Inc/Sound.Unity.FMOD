@@ -49,7 +49,7 @@ namespace Depra.Sound.FMOD
 				}
 			}
 
-			return new RuntimeAudioEvent(_clip, new AudioEventContract(
+			return new RuntimeAudioEvent(_clip, new RuntimeAudioEventContract(
 				exportedParams.ToArray(),
 				optionalParams.ToArray()));
 		}

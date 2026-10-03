@@ -17,7 +17,7 @@ namespace Depra.Sound.FMOD.Editor
 
 			var clip = property.FindPropertyRelative("_clip")?.FindPropertyRelative("_event");
 			var firstLineHeight = EditorGUIUtility.singleLineHeight;
-			var eventLabelRect = new Rect(position.x, position.y, EVENT_LABEL_WIDTH, EditorGUIUtility.singleLineHeight);
+			var eventLabelRect = new Rect(position.x, position.y, EVENT_LABEL_WIDTH, firstLineHeight);
 			var fieldRect = new Rect(eventLabelRect.xMax, position.y,
 				position.width - EVENT_LABEL_WIDTH - DETAILS_BUTTON_WIDTH - 4f, firstLineHeight);
 			var buttonRect = new Rect(fieldRect.xMax + 4f, position.y, DETAILS_BUTTON_WIDTH,

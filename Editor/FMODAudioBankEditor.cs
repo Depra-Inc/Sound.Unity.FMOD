@@ -38,14 +38,24 @@ namespace Depra.Sound.FMOD.Editor
 			serializedObject.Update();
 
 			DrawImportToolbar();
+			EditorGUILayout.Space(4f);
 			DrawBankMetadata();
+			DrawBankSummary();
+			EditorGUILayout.Space(2f);
 			DrawEventList();
 			DrawContainerList();
 
 			_events.DoList(GUILayoutUtility.GetRect(0f, _events.GetHeight(), GUILayout.ExpandWidth(true)));
-			EditorGUILayout.Space(6f);
+			EditorGUILayout.Space(4f);
 			_containers.DoList(GUILayoutUtility.GetRect(0f, _containers.GetHeight(), GUILayout.ExpandWidth(true)));
 			serializedObject.ApplyModifiedProperties();
+		}
+
+		private void DrawBankSummary()
+		{
+			var events = serializedObject.FindProperty("_events")?.arraySize ?? 0;
+			var containers = serializedObject.FindProperty("_containers")?.arraySize ?? 0;
+			EditorGUILayout.HelpBox($"FMOD Bank mapping: {events} events, {containers} containers.", MessageType.None);
 		}
 
 		private void DrawImportToolbar()
@@ -53,11 +63,10 @@ namespace Depra.Sound.FMOD.Editor
 			using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
 			{
 				EditorGUILayout.LabelField(
-					"This bank is generated from FMOD Bank. Reimport the bank to update events and containers.",
-					EditorStyles.helpBox, GUILayout.MaxWidth(800f), GUILayout.Height(16f));
-
+					"Generated from FMOD Studio. Reimport to refresh mappings.",
+					EditorStyles.miniLabel);
 				GUILayout.FlexibleSpace();
-				if (GUILayout.Button(_importButtonContent, EditorStyles.toolbarButton, GUILayout.Width(160f)))
+				if (GUILayout.Button(_importButtonContent, EditorStyles.toolbarButton, GUILayout.Width(168f)))
 				{
 					FMODAudioBankImportWindow.Open(target as FMODAudioBank);
 				}
@@ -109,7 +118,7 @@ namespace Depra.Sound.FMOD.Editor
 						}
 					}
 
-					EditorGUI.LabelField(rect, $"Events ({matched}/{entries.arraySize})");
+					EditorGUI.LabelField(rect, $"Events ({matched}/{entries.arraySize})", EditorStyles.miniBoldLabel);
 				},
 				drawElementCallback = (rect, index, _, _) => DrawEventRow(rect, entries, index),
 				onRemoveCallback = list =>
@@ -137,7 +146,8 @@ namespace Depra.Sound.FMOD.Editor
 				elementHeightCallback = index => index >= entries.arraySize
 					? EditorGUIUtility.singleLineHeight
 					: GetContainerHeight(),
-				drawHeaderCallback = rect => EditorGUI.LabelField(rect, $"Containers ({entries.arraySize})"),
+				drawHeaderCallback = rect =>
+					EditorGUI.LabelField(rect, $"Containers ({entries.arraySize})", EditorStyles.miniBoldLabel),
 				drawElementCallback = (rect, index, _, _) => DrawContainerRow(rect, entries, index),
 				onAddCallback = list => AddContainer(entries, list),
 				onRemoveCallback = list =>
@@ -226,12 +236,13 @@ namespace Depra.Sound.FMOD.Editor
 
 			if (!entry.isExpanded)
 			{
+				DrawEventSeparator(rect);
 				return;
 			}
 
 			var reimportRect = new Rect(rect.xMax - ACTION_BUTTON_WIDTH, rect.y + 2f, EVENT_ACTION_BUTTON_WIDTH,
 				EditorGUIUtility.singleLineHeight);
-			if (GUI.Button(reimportRect, "Reimport"))
+			if (GUI.Button(reimportRect, "Reimport", EditorStyles.miniButtonLeft))
 			{
 				ReimportEvent(entries, index);
 				return;
@@ -239,7 +250,7 @@ namespace Depra.Sound.FMOD.Editor
 
 			var duplicateRect = new Rect(reimportRect.xMax + 4f, rect.y + 2f, EVENT_ACTION_BUTTON_WIDTH,
 				EditorGUIUtility.singleLineHeight);
-			if (GUI.Button(duplicateRect, "Duplicate"))
+			if (GUI.Button(duplicateRect, "Duplicate", EditorStyles.miniButtonRight))
 			{
 				DuplicateEvent(entries, index);
 				return;
@@ -260,6 +271,24 @@ namespace Depra.Sound.FMOD.Editor
 			var eventContent = new GUIContent("Event");
 			var eventHeight = EditorGUI.GetPropertyHeight(description, eventContent, true);
 			EditorGUI.PropertyField(new Rect(indent, y, width, eventHeight), description, eventContent, true);
+			DrawEventSeparator(rect);
+		}
+
+		private static void DrawEventSeparator(Rect rect)
+		{
+			var separatorY = rect.yMax - 2f;
+			var separatorRect = new Rect(rect.x + 12f, separatorY, rect.width - 24f, 1f);
+			var shadowRect = new Rect(separatorRect.x, separatorRect.y + 1f, separatorRect.width, 1f);
+
+			if (EditorGUIUtility.isProSkin)
+			{
+				EditorGUI.DrawRect(separatorRect, new Color(0f, 0f, 0f, 0.35f));
+				EditorGUI.DrawRect(shadowRect, new Color(1f, 1f, 1f, 0.03f));
+				return;
+			}
+
+			EditorGUI.DrawRect(separatorRect, new Color(0f, 0f, 0f, 0.16f));
+			EditorGUI.DrawRect(shadowRect, new Color(1f, 1f, 1f, 0.26f));
 		}
 
 		private void DuplicateEvent(SerializedProperty entries, int index)
