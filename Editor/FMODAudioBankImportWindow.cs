@@ -332,18 +332,13 @@ namespace Depra.Sound.FMOD.Editor
 				return;
 			}
 
-			if (!CreateTarget(out _target))
-			{
-				return;
-			}
-
 			Undo.RecordObject(table, "Import all FMOD banks");
 			foreach (var bank in _banks)
 			{
 				var bankKey = string.IsNullOrEmpty(bank.StudioPath) ? bank.Path : bank.StudioPath;
 				if (!CreateTarget(out _target, bankKey))
 				{
-					return;
+					break;
 				}
 
 				var totalSize = bank.FileSizes.Sum(sizeInfo => sizeInfo.Value);

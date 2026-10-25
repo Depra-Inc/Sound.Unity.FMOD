@@ -32,6 +32,7 @@ namespace Depra.Sound.FMOD.Editor
 				if (!supported)
 				{
 					EditorGUI.LabelField(valueRect, "Unsupported", EditorStyles.miniLabel);
+					return;
 				}
 
 				var paramType = (FMODAudioParamOverride.ParamType)type.enumValueIndex;
