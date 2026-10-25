@@ -7,7 +7,7 @@ namespace Depra.Sound.FMOD
 	{
 		public const int DEFAULT_ORDER = 52;
 		public const string LOG_FORMAT = "[Sound] {0}";
-		public const string MENU_PATH = nameof(Sound) + "/" + nameof(FMOD) + "/";
+		public const string MENU_PATH = "Depra/Sound/FMOD/";
 		public const string SOUND_DEBUG = "SOUND_DEBUG";
 	}
 }

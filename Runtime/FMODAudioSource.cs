@@ -1,13 +1,9 @@
 ﻿// SPDX-License-Identifier: Apache-2.0
-// © 2024-2025 Depra <n.melnikov@depra.org>
+// © 2024-2026 Depra <n.melnikov@depra.org>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using Depra.Sound.Configuration;
-using Depra.Sound.Exceptions;
 using FMOD;
 using FMOD.Studio;
 using FMODUnity;
@@ -18,130 +14,128 @@ using STOP_MODE = FMOD.Studio.STOP_MODE;
 
 namespace Depra.Sound.FMOD
 {
-	[AddComponentMenu(MENU_PATH + nameof(FMODAudioSource), DEFAULT_ORDER)]
-	public sealed class FMODAudioSource : SceneAudioSource, IAudioSource<FMODAudioClip>
+	[AddComponentMenu(MENU_PATH + FILE_NAME, DEFAULT_ORDER)]
+	public sealed class FMODAudioSource : SceneAudioSource, IAudioSource
 	{
 		[SerializeField] private STOP_MODE _stopMode;
 		[SerializeField] private bool _autoRelease = true;
 
+		private const string FILE_NAME = "FMOD Audio Source";
 		private static readonly Type SUPPORTED_CLIP = typeof(FMODAudioClip);
-		private static readonly Type[] SUPPORTED_CLIPS = { SUPPORTED_CLIP };
-		private static readonly Type[] SUPPORTED_PARAMETERS =
-		{
-			typeof(FMODLabel),
-			typeof(FMODSingle),
-			typeof(FMODInteger),
-			typeof(LoopParameter),
-			typeof(EmptyParameter),
-			typeof(LabelParameter),
-			typeof(PitchParameter),
-			typeof(VolumeParameter),
-			typeof(SingleParameter),
-			typeof(IntegerParameter),
-			typeof(PositionParameter),
-			typeof(TransformParameter)
-		};
 
-		private EventInstance _cachedInstance;
+		private FMODAudioClip _currentClip;
+		private EventInstance _eventInstance;
 
 		public event Action Started;
 		public event Action<AudioStopReason> Stopped;
 
 		private void OnDestroy()
 		{
-			if (_cachedInstance.isValid())
+			if (_eventInstance.isValid())
 			{
-				_cachedInstance.release();
+				_eventInstance.release();
 			}
 		}
 
-		public bool IsPlaying
-		{
-			get
-			{
-				if (!_cachedInstance.isValid() || _cachedInstance.getPlaybackState(out var state) != RESULT.OK)
-				{
-					VerboseInfo($"'{_cachedInstance}' is not valid!");
-					return false;
-				}
-
-				return state != PLAYBACK_STATE.STOPPED && state != PLAYBACK_STATE.STOPPING;
-			}
-		}
-
-		public FMODAudioClip Current { get; private set; }
-		IAudioClip IAudioSource.Current => Current;
-		IEnumerable<Type> IAudioSource.SupportedClips => SUPPORTED_CLIPS;
+		public bool IsPlaying => IsPlayingInternal();
+		IAudioClip IAudioSource.Current => _currentClip;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Stop()
 		{
-            Current = default;
+			_currentClip = null;
 			if (IsPlaying)
 			{
 				OnStop(AudioStopReason.STOPPED);
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Play(FMODAudioClip clip, IEnumerable<IAudioSourceParameter> parameters)
+		public void Play(IAudioClip clip)
 		{
-			_cachedInstance = RuntimeManager.CreateInstance(clip);
-			if (!_cachedInstance.isValid())
+			Guard.AgainstUnsupportedType(clip, SUPPORTED_CLIP);
+			var fmodClip = (FMODAudioClip)clip;
+			_eventInstance = RuntimeManager.CreateInstance(fmodClip);
+			if (!_eventInstance.isValid())
 			{
 				return;
 			}
 
-			Current = clip;
-			foreach (var parameter in parameters)
-			{
-				Write(parameter);
-			}
-
-			StartClip(_cachedInstance);
+			_currentClip = fmodClip;
+			StartClip(_eventInstance);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public bool Write(IAudioSourceParameter parameter)
+		public void Play(IAudioClip clip, ReadOnlySpan<AudioParam> parameters)
 		{
-			var result = parameter switch
+			Guard.AgainstUnsupportedType(clip, SUPPORTED_CLIP);
+			var fmodClip = (FMODAudioClip)clip;
+			_eventInstance = RuntimeManager.CreateInstance(fmodClip);
+			if (!_eventInstance.isValid())
 			{
-				EmptyParameter => RESULT.OK,
-				PitchParameter pitch => _cachedInstance.setPitch(pitch.Value),
-				VolumeParameter volume => _cachedInstance.setVolume(volume.Value),
-				TransformParameter target => AttachToTransform(_cachedInstance, target.Value),
-				SingleParameter single => _cachedInstance.setParameterByName(single.Name, single.Value),
-				IntegerParameter integer => _cachedInstance.setParameterByName(integer.Name, integer.Value),
-				LabelParameter label => _cachedInstance.setParameterByNameWithLabel(label.Name, label.Value),
-				PositionParameter position => _cachedInstance.set3DAttributes(position.Value.To3DAttributes()),
-				RuntimePositionParameter => _cachedInstance.set3DAttributes(transform.To3DAttributes()),
-				LoopParameter loop => _cachedInstance.setParameterByName(FMODLoop.DEFAULT_NAME, FMODLoop.Convert(loop)),
-				FMODSingle single => _cachedInstance.setParameterByName(single.Name, single.Value, single.IgnoreSeekSpeed),
-				FMODLabel label => _cachedInstance.setParameterByNameWithLabel(label.Name, label.Value, label.IgnoreSeekSpeed),
-				FMODInteger integer => _cachedInstance.setParameterByName(integer.Name, integer.Value, integer.IgnoreSeekSpeed),
-				_ => RESULT.ERR_INVALID_PARAM
-			};
-			if (result == RESULT.OK)
-			{
-				return true;
+				return;
 			}
 
-			VerboseError($"Parameter '{parameter.GetType().Name}' cannot be applied to '{name}' ({nameof(FMODAudioSource)}) with result: '{result}'");
-			return false;
+			foreach (var param in parameters)
+			{
+				SetParameter(param);
+			}
+
+			_currentClip = fmodClip;
+			StartClip(_eventInstance);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public IAudioSourceParameter Read(Type type) => type switch
+		private void SetParameter(in AudioParam parameter)
 		{
-			_ when type == typeof(VolumeParameter) && _cachedInstance.getVolume(out var volume) == RESULT.OK =>
-				new VolumeParameter(volume),
-			_ when type == typeof(PitchParameter) && _cachedInstance.getPitch(out var pitch) == RESULT.OK =>
-				new PitchParameter(pitch),
-			_ when type == typeof(PositionParameter) && _cachedInstance.get3DAttributes(out var attr) == RESULT.OK =>
-				new PositionParameter(new Vector3(attr.position.x, attr.position.y, attr.position.z)),
-			_ when type == typeof(TransformParameter) => new TransformParameter(transform),
-			_ => new NullParameter()
-		};
+			RESULT result;
+			var paramId = parameter.Id;
+			if (paramId == AudioParamId.Volume && parameter.Type == AudioParamType.FLOAT)
+			{
+				result = _eventInstance.setVolume(parameter.FloatValue);
+			}
+			else if (paramId == AudioParamId.Loop && parameter.Type == AudioParamType.BOOL)
+			{
+				result = _eventInstance.setParameterByName("Loop", parameter.IntegerValue);
+			}
+			else if (paramId == AudioParamId.Pan && parameter.Type == AudioParamType.FLOAT)
+			{
+				// FMOD does not have a direct pan parameter.
+				result = RESULT.ERR_UNSUPPORTED;
+			}
+			else if (paramId == AudioParamId.Pitch && parameter.Type == AudioParamType.FLOAT)
+			{
+				result = _eventInstance.setPitch(parameter.FloatValue);
+			}
+			else if (parameter.Type == AudioParamType.NAMED_FLOAT)
+			{
+				result = _eventInstance.setParameterByName(parameter.Name, parameter.FloatValue);
+			}
+			else if (parameter.Type == AudioParamType.NAMED_INT)
+			{
+				result = _eventInstance.setParameterByName(parameter.Name, parameter.IntegerValue);
+			}
+			else if (parameter.Type == AudioParamType.NAMED_STRING)
+			{
+				result = _eventInstance.setParameterByNameWithLabel(parameter.Name, parameter.StringValue);
+			}
+			else if (paramId == UnityAudioParamId.Position && parameter.Type == AudioParamType.FLOAT3)
+			{
+				var position = new Vector3(parameter.Float0, parameter.Float1, parameter.Float2);
+				result = _eventInstance.set3DAttributes(position.To3DAttributes());
+			}
+			else if (paramId == UnityAudioParamId.Transform && parameter.ReferenceValue is Transform transformParameter)
+			{
+				RuntimeManager.AttachInstanceToGameObject(_eventInstance, transformParameter);
+				result = RESULT.OK;
+			}
+			else
+			{
+				result = RESULT.ERR_INVALID_PARAM;
+			}
+
+			if (result != RESULT.OK)
+			{
+				VerboseError($"Failed to set parameter '{paramId}' with result: '{result}'");
+			}
+		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void StartClip(EventInstance instance)
@@ -165,27 +159,24 @@ namespace Depra.Sound.FMOD
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void OnStop(AudioStopReason reason)
 		{
-			_cachedInstance.stop(_stopMode);
-			_cachedInstance.release();
-			_cachedInstance = default;
+			_eventInstance.stop(_stopMode);
+			_eventInstance.release();
+			_eventInstance = default;
+			_currentClip = null;
 
 			Stopped?.Invoke(reason);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private RESULT AttachToTransform(EventInstance instance, Transform target)
+		private bool IsPlayingInternal()
 		{
-			RuntimeManager.AttachInstanceToGameObject(instance, target);
-			return RESULT.OK;
-		}
+			if (!_eventInstance.isValid() || _eventInstance.getPlaybackState(out var state) != RESULT.OK)
+			{
+				VerboseInfo($"'{_eventInstance}' is not valid!");
+				return false;
+			}
 
-		void IAudioSource.Play(IAudioClip clip, IList<IAudioSourceParameter> parameters)
-		{
-			Guard.AgainstUnsupportedType(clip.GetType(), SUPPORTED_CLIP);
-			Play((FMODAudioClip)clip, parameters);
+			return state != PLAYBACK_STATE.STOPPED && state != PLAYBACK_STATE.STOPPING;
 		}
-
-		IEnumerable<IAudioSourceParameter> IAudioSource.EnumerateParameters() => SUPPORTED_PARAMETERS.Select(Read);
 
 		[Conditional(SOUND_DEBUG)]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
